@@ -1,0 +1,33 @@
+# KYX 签到系统 - 用户端配置（简化版）
+# 不需要 SESSION_SECRET 和 FRONTEND_URL
+
+name = "kyx-checkin"
+main = "workers-index.js"
+compatibility_date = "2024-01-01"
+
+# D1 数据库配置
+[[d1_databases]]
+binding = "DB"
+database_name = "kyx-checkin-system"
+database_id = "your-database-id-here"  # 替换为你的实际数据库ID
+
+# KV 命名空间配置
+[[kv_namespaces]]
+binding = "KV"
+id = "your-kv-namespace-id"  # 替换为你的实际 KV 命名空间ID
+preview_id = "your-preview-kv-namespace-id"  # 替换为你的预览 KV 命名空间ID
+
+# 必需的环境变量
+[vars]
+OAUTH_CLIENT_ID = "qictxt8DOyaFjyLUuCXLROTmUmebUPM0"        # 你的 Linux Do OAuth 客户端ID
+OAUTH_CLIENT_SECRET = "jaU9WhOWcygefvQpGvXJsO9Ci6pISiRP" # 你的 Linux Do OAuth 客户端密钥
+# FRONTEND_URL 已移除 - 系统会自动检测当前域名
+
+# 部署配置
+[build]
+command = ""
+
+# 路由配置（如果使用自定义域名）
+# [[routes]]
+# pattern = "checkin.yourdomain.com/*"
+# zone_name = "yourdomain.com"

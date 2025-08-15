@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYX 管理后台测试工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn.success {
+            background: #28a745;
+        }
+
+        .btn.danger {
+            background: #dc3545;
+        }
+
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .success {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+
+        .error {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .status.ok {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔧 KYX 管理后台测试工具</h1>
+        <p>测试地址: <strong>https://kyxsgiadmin.kyxjames23.workers.dev/</strong></p>
+        <p>测试修复后的管理员后台功能是否正常工作</p>
+
+        <div class="test-section">
+            <h3>🌐 服务器连接测试</h3>
+            <div class="step">
+                <button class="btn" onclick="testConnection()">测试服务器连接</button>
+                <span id="connectionStatus" class="status">未测试</span>
+                <br>
+                <button class="btn" onclick="testCORS()">测试跨域设置</button>
+                <span id="corsStatus" class="status">未测试</span>
+            </div>
+            <div id="connectionResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>步骤 1: 管理员登录</h3>
+            <div class="step">
+                <input type="text" id="username" placeholder="用户名" value="admin">
+                <input type="password" id="password" placeholder="密码" value="admin123">
+                <button class="btn" onclick="testLogin()">登录</button>
+                <span id="loginStatus" class="status">未测试</span>
+            </div>
+            <div id="loginResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>步骤 2: 测试各个页面数据加载</h3>
+            <div class="step">
+                <button class="btn" onclick="testDashboard()">测试仪表盘</button>
+                <span id="dashboardStatus" class="status">未测试</span>
+                <br>
+                <button class="btn" onclick="testCodes()">测试兑换码页面</button>
+                <span id="codesStatus" class="status">未测试</span>
+                <br>
+                <button class="btn" onclick="testUsers()">测试用户页面</button>
+                <span id="usersStatus" class="status">未测试</span>
+                <br>
+                <button class="btn" onclick="testCheckins()">测试签到页面</button>
+                <span id="checkinsStatus" class="status">未测试</span>
+            </div>
+            <div id="pagesResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>步骤 3: 测试功能操作</h3>
+            <div class="step">
+                <button class="btn" onclick="testGenerate()">测试生成兑换码</button>
+                <span id="generateStatus" class="status">未测试</span>
+                <br>
+                <button class="btn" onclick="testSearch()">测试搜索功能</button>
+                <span id="searchStatus" class="status">未测试</span>
+            </div>
+            <div id="functionsResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>步骤 4: 访问实际管理后台</h3>
+            <div class="step">
+                <button class="btn success" onclick="openAdminPanel()">打开管理后台</button>
+                <button class="btn" onclick="openLoginPage()">打开登录页面</button>
+                <button class="btn" onclick="testDirectAccess()">测试直接访问</button>
+                <span id="accessStatus" class="status">未测试</span>
+                <p>点击上面的按钮打开实际的管理后台页面，检查界面是否正常显示</p>
+            </div>
+            <div id="accessResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 高级调试工具</h3>
+            <div class="step">
+                <button class="btn" onclick="testAllEndpoints()">测试所有API端点</button>
+                <span id="endpointsStatus" class="status">未测试</span>
+                <br>
+                <button class="btn" onclick="testWithDebugMode()">调试模式测试</button>
+                <span id="debugStatus" class="status">未测试</span>
+                <br>
+                <button class="btn" onclick="exportTestReport()">导出测试报告</button>
+            </div>
+            <div id="debugResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试总结</h3>
+            <div id="summary" class="result">
+                等待测试完成...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 配置
+        const ADMIN_BASE_URL = 'https://kyxsgiadmin.kyxjames23.workers.dev';
+        const API_BASE_URL = 'https://kyxsgiadmin.kyxjames23.workers.dev/api/admin';
+
+        let testResults = {
+            connection: false,
+            cors: false,
+            login: false,
+            dashboard: false,
+            codes: false,
+            users: false,
+            checkins: false,
+            generate: false,
+            search: false,
+            access: false,
+            endpoints: false,
+            debug: false
+        };
+
+        let testLog = [];
+
+        function updateStatus(id, success) {
+            const element = document.getElementById(id);
+            element.className = 'status ' + (success ? 'ok' : 'fail');
+            element.textContent = success ? '✅ 通过' : '❌ 失败';
+        }
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        }
+
+        function logTest(test, result, details) {
+            const timestamp = new Date().toLocaleTimeString();
+            testLog.push({
+                timestamp,
+                test,
+                result,
+                details
+            });
+        }
+
+        function updateSummary() {
+            const total = Object.keys(testResults).length;
+            const passed = Object.values(testResults).filter(r => r).length;
+            const summary = `🎯 测试进度: ${passed}/${total} 项通过\n` +
+                `🌐 测试地址: ${ADMIN_BASE_URL}\n` +
+                `⏰ 测试时间: ${new Date().toLocaleString()}\n\n` +
+                `📊 详细结果:\n` +
+                Object.entries(testResults).map(([key, value]) =>
+                    `  ${key}: ${value ? '✅ 通过' : '❌ 失败'}`
+                ).join('\n') + '\n\n' +
+                `📝 最近测试日志:\n` +
+                testLog.slice(-5).map(log =>
+                    `  [${log.timestamp}] ${log.test}: ${log.result ? '✅' : '❌'}`
+                ).join('\n');
+
+            document.getElementById('summary').textContent = summary;
+        }
+
+        async function makeRequest(url, options = {}) {
+            // 构建完整URL
+            let fullUrl;
+            if (url.startsWith('http')) {
+                fullUrl = url;
+            } else if (url.startsWith('/api/admin/')) {
+                fullUrl = ADMIN_BASE_URL + url;
+            } else {
+                fullUrl = API_BASE_URL + url;
+                const startTime = Date.now();
+
+                try {
+                    console.log(`🔄 Request: ${options.method || 'GET'} ${fullUrl}`);
+
+                    const response = await fetch(fullUrl, {
+                        mode: 'cors',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            ...options.headers
+                        },
+                        ...options
+                    });
+
+                    const duration = Date.now() - startTime;
+                    const text = await response.text();
+
+                    console.log(`📡 Response: ${response.status} (${duration}ms)`);
+                    console.log(`📄 Response body:`, text);
+
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        data = {
+                            error: 'Invalid JSON',
+                            text: text,
+                            contentType: response.headers.get('content-type')
+                        };
+                    }
+
+                    return {
+                        ok: response.ok,
+                        status: response.status,
+                        data: data,
+                        duration: duration,
+                        headers: Object.fromEntries(response.headers.entries())
+                    };
+                } catch (error) {
+                    const duration = Date.now() - startTime;
+                    console.error(`❌ Request failed:`, error);
+                    return {
+                        ok: false,
+                        error: error.message,
+                        duration: duration
+                    };
+                }
+            }
+
+            // 新增测试函数
+            async function testConnection() {
+                try {
+                    const result = await fetch(ADMIN_BASE_URL, {
+                        method: 'HEAD',
+                        mode: 'cors'
+                    });
+
+                    testResults.connection = result.ok;
+                    updateStatus('connectionStatus', testResults.connection);
+
+                    const details = `状态: ${result.status}\n响应时间: ${Date.now()}ms\n服务器: ${result.headers.get('server') || '未知'}`;
+                    showResult('connectionResult', details, !testResults.connection);
+                    logTest('服务器连接', testResults.connection, details);
+
+                } catch (error) {
+                    testResults.connection = false;
+                    updateStatus('connectionStatus', false);
+                    showResult('connectionResult', `连接失败: ${error.message}`, true);
+                    logTest('服务器连接', false, error.message);
+                }
+                updateSummary();
+            }
+
+            async function testCORS() {
+                try {
+                    const result = await makeRequest('/stats');
+                    testResults.cors = result.ok || result.status === 401; // 401也说明CORS正常
+                    updateStatus('corsStatus', testResults.cors);
+
+                    const details = `CORS测试: ${testResults.cors ? '通过' : '失败'}\n状态码: ${result.status}\nHeaders: ${JSON.stringify(result.headers, null, 2)}`;
+                    showResult('connectionResult', details, !testResults.cors);
+                    logTest('CORS设置', testResults.cors, details);
+
+                } catch (error) {
+                    testResults.cors = false;
+                    updateStatus('corsStatus', false);
+                    showResult('connectionResult', `CORS测试失败: ${error.message}`, true);
+                    logTest('CORS设置', false, error.message);
+                }
+                updateSummary();
+            }
+
+            async function testLogin() {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                const result = await makeRequest('/api/admin/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+
+                testResults.login = result.ok && result.data && result.data.success;
+                updateStatus('loginStatus', testResults.login);
+                showResult('loginResult', result, !testResults.login);
+                logTest('管理员登录', testResults.login, `用户: ${username}, 状态: ${result.status}`);
+                updateSummary();
+            }
+
+            async function testDashboard() {
+                const result = await makeRequest('/api/admin/stats');
+                testResults.dashboard = result.ok && result.data && result.data.success;
+                updateStatus('dashboardStatus', testResults.dashboard);
+
+                const summary = testResults.dashboard ?
+                    `✅ 仪表盘数据加载成功\n统计: ${JSON.stringify(result.data.stats, null, 2)}` :
+                    `❌ 仪表盘加载失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+                showResult('pagesResult', summary, !testResults.dashboard);
+                logTest('仪表盘数据', testResults.dashboard, `响应时间: ${result.duration}ms`);
+                updateSummary();
+            }
+
+            async function testCodes() {
+                const result = await makeRequest('/api/admin/codes?page=1&limit=5');
+                testResults.codes = result.ok && result.data && result.data.success;
+                updateStatus('codesStatus', testResults.codes);
+
+                const summary = testResults.codes ?
+                    `✅ 兑换码数据加载成功\n数量: ${result.data.codes?.length || 0} 个兑换码` :
+                    `❌ 兑换码加载失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+                showResult('pagesResult', summary, !testResults.codes);
+                logTest('兑换码数据', testResults.codes, `响应时间: ${result.duration}ms`);
+                updateSummary();
+            }
+
+            async function testUsers() {
+                const result = await makeRequest('/api/admin/users?page=1&limit=5');
+                testResults.users = result.ok && result.data && result.data.success;
+                updateStatus('usersStatus', testResults.users);
+
+                const summary = testResults.users ?
+                    `✅ 用户数据加载成功\n数量: ${result.data.users?.length || 0} 个用户` :
+                    `❌ 用户数据加载失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+                showResult('pagesResult', summary, !testResults.users);
+                logTest('用户数据', testResults.users, `响应时间: ${result.duration}ms`);
+                updateSummary();
+            }
+
+            async function testCheckins() {
+                const result = await makeRequest('/api/admin/checkins?page=1&limit=5');
+                testResults.checkins = result.ok && result.data && result.data.success;
+                updateStatus('checkinsStatus', testResults.checkins);
+
+                const summary = testResults.checkins ?
+                    `✅ 签到数据加载成功\n数量: ${result.data.checkins?.length || 0} 条记录` :
+                    `❌ 签到数据加载失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+                showResult('pagesResult', summary, !testResults.checkins);
+                logTest('签到数据', testResults.checkins, `响应时间: ${result.duration}ms`);
+                updateSummary();
+            }
+
+            async function testGenerate() {
+                const result = await makeRequest('/api/admin/codes/generate', {
+                    method: 'POST',
+                    body: JSON.stringify({ count: 2, amount: 5.00, adminId: 1 })
+                });
+                testResults.generate = result.ok && result.data && result.data.success;
+                updateStatus('generateStatus', testResults.generate);
+
+                const summary = testResults.generate ?
+                    `✅ 兑换码生成成功\n消息: ${result.data.message}` :
+                    `❌ 兑换码生成失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+                showResult('functionsResult', summary, !testResults.generate);
+                logTest('生成兑换码', testResults.generate, `响应时间: ${result.duration}ms`);
+                updateSummary();
+            }
+
+            async function testSearch() {
+                const result = await makeRequest('/api/admin/codes/search?q=TEST');
+                testResults.search = result.ok && result.data && result.data.success;
+                updateStatus('searchStatus', testResults.search);
+
+                const summary = testResults.search ?
+                    `✅ 搜索功能正常\n结果: ${result.data.codes?.length || 0} 个匹配项` :
+                    `❌ 搜索功能失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+                showResult('functionsResult', summary, !testResults.search);
+                logTest('搜索功能', testResults.search, `响应时间: ${result.duration}ms`);
+                updateSummary();
+            }
+
+            // 新增的高级测试函数
+            async function testDirectAccess() {
+                try {
+                    const result = await fetch(ADMIN_BASE_URL + '/admin');
+                    testResults.access = result.ok;
+                    updateStatus('accessStatus', testResults.access);
+
+                    const details = `直接访问: ${result.status}\nContent-Type: ${result.headers.get('content-type')}`;
+                    showResult('accessResult', details, !testResults.access);
+                    logTest('直接访问', testResults.access, details);
+
+                } catch (error) {
+                    testResults.access = false;
+                    updateStatus('accessStatus', false);
+                    showResult('accessResult', `访问失败: ${error.message}`, true);
+                    logTest('直接访问', false, error.message);
+                }
+                updateSummary();
+            }
+
+            async function testAllEndpoints() {
+                const endpoints = [
+                    { name: '统计', path: '/stats' },
+                    { name: '兑换码', path: '/codes' },
+                    { name: '用户', path: '/users' },
+                    { name: '签到', path: '/checkins' },
+                    { name: '搜索', path: '/codes/search?q=test' }
+                ];
+
+                let results = [];
+                for (const endpoint of endpoints) {
+                    try {
+                        const result = await makeRequest(endpoint.path);
+                        const success = result.ok && result.data;
+                        results.push(`${endpoint.name}: ${success ? '✅' : '❌'} (${result.status})`);
+                    } catch (error) {
+                        results.push(`${endpoint.name}: ❌ (${error.message})`);
+                    }
+                }
+
+                const allPassed = results.every(r => r.includes('✅'));
+                testResults.endpoints = allPassed;
+                updateStatus('endpointsStatus', allPassed);
+                showResult('debugResult', results.join('\n'), !allPassed);
+                logTest('所有端点', allPassed, `测试了 ${endpoints.length} 个端点`);
+                updateSummary();
+            }
+
+            async function testWithDebugMode() {
+                const debugEndpoints = [
+                    '/codes?debug=true',
+                    '/users?debug=true'
+                ];
+
+                let results = [];
+                for (const endpoint of debugEndpoints) {
+                    try {
+                        const result = await makeRequest(endpoint);
+                        const hasDebugData = result.data && result.data.debug;
+                        results.push(`${endpoint}: ${hasDebugData ? '✅ 有调试数据' : '❌ 无调试数据'}`);
+                    } catch (error) {
+                        results.push(`${endpoint}: ❌ ${error.message}`);
+                    }
+                }
+
+                const allPassed = results.every(r => r.includes('✅'));
+                testResults.debug = allPassed;
+                updateStatus('debugStatus', allPassed);
+                showResult('debugResult', results.join('\n'), !allPassed);
+                logTest('调试模式', allPassed, `测试了 ${debugEndpoints.length} 个调试端点`);
+                updateSummary();
+            }
+
+            function exportTestReport() {
+                const report = {
+                    timestamp: new Date().toISOString(),
+                    testUrl: ADMIN_BASE_URL,
+                    results: testResults,
+                    log: testLog,
+                    summary: {
+                        total: Object.keys(testResults).length,
+                        passed: Object.values(testResults).filter(r => r).length,
+                        failed: Object.values(testResults).filter(r => !r).length
+                    }
+                };
+
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `admin-test-report-${new Date().toISOString().slice(0, 19)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            function openAdminPanel() {
+                window.open(ADMIN_BASE_URL, '_blank');
+            }
+
+            function openLoginPage() {
+                window.open(ADMIN_BASE_URL + '/login', '_blank');
+            }
+
+            // 初始化
+            updateSummary();
+    </script>
+</body>
+
+</html>

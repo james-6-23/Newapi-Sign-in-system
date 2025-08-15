@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简化管理员测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { background: #0056b3; }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 简化管理员功能测试</h1>
+        
+        <div class="section">
+            <h3>1. 管理员登录测试</h3>
+            <input type="text" id="username" placeholder="用户名" value="admin">
+            <input type="password" id="password" placeholder="密码" value="admin123">
+            <button class="btn" onclick="testLogin()">登录</button>
+            <button class="btn" onclick="testLogout()">登出</button>
+            <div id="loginResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>2. 基础API测试</h3>
+            <button class="btn" onclick="testStats()">获取统计</button>
+            <button class="btn" onclick="testCodes()">获取兑换码</button>
+            <button class="btn" onclick="testUsers()">获取用户</button>
+            <button class="btn" onclick="testCheckins()">获取签到</button>
+            <div id="apiResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>3. 数据库直接测试</h3>
+            <button class="btn" onclick="testDbCodes()">测试兑换码表</button>
+            <button class="btn" onclick="testDbUsers()">测试用户表</button>
+            <div id="dbResult" class="result"></div>
+        </div>
+
+        <div class="section">
+            <h3>4. 生成功能测试</h3>
+            <input type="number" id="genCount" placeholder="数量" value="3" min="1" max="10">
+            <input type="number" id="genAmount" placeholder="金额" value="10.00" step="0.01">
+            <button class="btn" onclick="testGenerate()">生成兑换码</button>
+            <div id="generateResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        let isLoggedIn = false;
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        }
+
+        async function makeRequest(url, options = {}) {
+            try {
+                console.log('🔄 Request:', url, options);
+                
+                const response = await fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                console.log('📡 Response status:', response.status);
+                
+                let data;
+                const text = await response.text();
+                console.log('📄 Response text:', text);
+                
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { error: 'Invalid JSON', text: text };
+                }
+
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data: data
+                };
+            } catch (error) {
+                console.error('❌ Request failed:', error);
+                return {
+                    ok: false,
+                    error: error.message
+                };
+            }
+        }
+
+        async function testLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const result = await makeRequest('/api/admin/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+            
+            if (result.ok && result.data.success) {
+                isLoggedIn = true;
+                showResult('loginResult', '✅ 登录成功！\n' + JSON.stringify(result.data, null, 2));
+            } else {
+                isLoggedIn = false;
+                showResult('loginResult', '❌ 登录失败：\n' + JSON.stringify(result, null, 2), true);
+            }
+        }
+
+        async function testLogout() {
+            const result = await makeRequest('/api/admin/logout', {
+                method: 'POST'
+            });
+            
+            isLoggedIn = false;
+            showResult('loginResult', '登出结果：\n' + JSON.stringify(result, null, 2));
+        }
+
+        async function testStats() {
+            const result = await makeRequest('/api/admin/stats');
+            showResult('apiResult', result, !result.ok);
+        }
+
+        async function testCodes() {
+            const result = await makeRequest('/api/admin/codes?page=1&limit=5');
+            showResult('apiResult', result, !result.ok);
+        }
+
+        async function testUsers() {
+            const result = await makeRequest('/api/admin/users?page=1&limit=5');
+            showResult('apiResult', result, !result.ok);
+        }
+
+        async function testCheckins() {
+            const result = await makeRequest('/api/admin/checkins?page=1&limit=5');
+            showResult('apiResult', result, !result.ok);
+        }
+
+        async function testDbCodes() {
+            const result = await makeRequest('/api/admin/codes?debug=true');
+            showResult('dbResult', result, !result.ok);
+        }
+
+        async function testDbUsers() {
+            const result = await makeRequest('/api/admin/users?debug=true');
+            showResult('dbResult', result, !result.ok);
+        }
+
+        async function testGenerate() {
+            const count = parseInt(document.getElementById('genCount').value);
+            const amount = parseFloat(document.getElementById('genAmount').value);
+            
+            if (!count || !amount || count <= 0 || amount <= 0) {
+                showResult('generateResult', '❌ 请输入有效的数量和金额', true);
+                return;
+            }
+            
+            const result = await makeRequest('/api/admin/codes/generate', {
+                method: 'POST',
+                body: JSON.stringify({
+                    count: count,
+                    amount: amount,
+                    adminId: 1
+                })
+            });
+            
+            showResult('generateResult', result, !result.ok);
+        }
+
+        // 页面加载时的提示
+        window.addEventListener('load', () => {
+            showResult('loginResult', '请先登录以测试管理员功能');
+            showResult('apiResult', '点击按钮测试API功能');
+            showResult('dbResult', '点击按钮测试数据库连接');
+            showResult('generateResult', '输入参数后点击生成测试');
+        });
+    </script>
+</body>
+</html>

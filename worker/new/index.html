@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYX 签到系统</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        /* 页面布局 */
+        .app-container {
+            min-height: 100vh;
+            background: var(--color-bg-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            background: var(--color-bg-elevated);
+            border-bottom: 1px solid var(--color-border-primary);
+            position: sticky;
+            top: 0;
+            z-index: var(--z-sticky);
+            backdrop-filter: blur(10px);
+            background: rgba(15, 15, 15, 0.95);
+        }
+
+        .navbar-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: var(--spacing-md) var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: var(--text-xl);
+            font-weight: var(--font-bold);
+            color: var(--color-text-primary);
+        }
+
+        .navbar-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-lg);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-full);
+            background: var(--color-bg-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .user-menu:hover {
+            background: var(--color-bg-tertiary);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-full);
+            background: var(--color-bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            color: var(--color-text-primary);
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: var(--color-bg-secondary);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+        }
+
+        .theme-toggle:hover {
+            background: var(--color-bg-tertiary);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            max-width: 1280px;
+            width: 100%;
+            margin: 0 auto;
+            padding: var(--spacing-2xl) var(--spacing-lg);
+        }
+
+        /* 签到卡片 */
+        .checkin-card {
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-2xl);
+            padding: var(--spacing-2xl);
+            margin-bottom: var(--spacing-2xl);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--color-border-primary);
+        }
+
+        .checkin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
+            animation: gradient 3s ease infinite;
+            background-size: 200% 100%;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .checkin-title {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .checkin-subtitle {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .checkin-btn {
+            padding: var(--spacing-lg) var(--spacing-3xl);
+            font-size: var(--text-lg);
+            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+            color: var(--color-text-inverse);
+            border: none;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkin-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .checkin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .checkin-btn.checked {
+            background: var(--color-success);
+        }
+
+        /* 统计网格 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .stat-card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            transition: all var(--transition-base);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-md);
+            font-size: var(--text-xl);
+        }
+
+        .stat-value {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .stat-label {
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+        }
+
+        /* 兑换码列表 */
+        .codes-section {
+            margin-top: var(--spacing-2xl);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-title {
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+        }
+
+        .codes-grid {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+
+        .code-item {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all var(--transition-fast);
+        }
+
+        .code-item:hover {
+            border-color: var(--color-border-focus);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .code-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .code-text {
+            font-family: var(--font-mono);
+            font-size: var(--text-sm);
+            background: var(--color-bg-secondary);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-md);
+        }
+
+        .code-amount {
+            font-weight: var(--font-semibold);
+            color: var(--color-success);
+        }
+
+        .code-date {
+            font-size: var(--text-xs);
+            color: var(--color-text-tertiary);
+        }
+
+        .copy-btn {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .copy-btn:hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-focus);
+        }
+
+        .copy-btn.copied {
+            background: var(--color-success);
+            color: white;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-3xl) var(--spacing-lg);
+            color: var(--color-text-secondary);
+        }
+
+        .empty-icon {
+            font-size: var(--text-5xl);
+            margin-bottom: var(--spacing-md);
+            opacity: 0.3;
+        }
+
+        /* 加载状态 */
+        .skeleton-loader {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar-content {
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+
+            .user-name {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 顶部导航 -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <div class="navbar-brand">
+                    <div class="navbar-logo">📅</div>
+                    <span>KYX 签到系统</span>
+                </div>
+                <div class="navbar-actions">
+                    <button class="theme-toggle" id="themeToggle" title="切换主题">
+                        <span id="themeIcon">🌙</span>
+                    </button>
+                    <div class="user-menu" id="userMenu">
+                        <div class="user-avatar" id="userAvatar">
+                            <span>👤</span>
+                        </div>
+                        <span class="user-name" id="userName">加载中...</span>
+                    </div>
+                    <button class="btn btn-sm btn-ghost" id="logoutBtn">退出</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容 -->
+        <main class="main-content">
+            <!-- 签到卡片 -->
+            <div class="checkin-card">
+                <h1 class="checkin-title">每日签到</h1>
+                <p class="checkin-subtitle" id="checkinSubtitle">今日还未签到，点击下方按钮完成签到</p>
+                <button class="checkin-btn" id="checkinBtn">
+                    <span id="checkinBtnText">立即签到</span>
+                </button>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="totalCheckins">0</div>
+                    <div class="stat-label">总签到天数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="consecutiveDays">0</div>
+                    <div class="stat-label">连续签到</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎫</div>
+                    <div class="stat-value" id="totalCodes">0</div>
+                    <div class="stat-label">获得兑换码</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="totalAmount">0</div>
+                    <div class="stat-label">累计金额</div>
+                </div>
+            </div>
+
+            <!-- 兑换码列表 -->
+            <div class="codes-section">
+                <div class="section-header">
+                    <h2 class="section-title">我的兑换码</h2>
+                    <button class="btn btn-sm btn-secondary" id="viewAllBtn">查看全部</button>
+                </div>
+                <div class="codes-grid" id="codesList">
+                    <div class="empty-state">
+                        <div class="empty-icon">📦</div>
+                        <p>暂无兑换码</p>
+                        <p class="text-sm text-secondary">完成签到后即可获得兑换码</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 兑换码弹窗 -->
+    <div class="modal" id="codeModal">
+        <div class="modal-backdrop" onclick="closeModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>签到成功！</h3>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">恭喜您获得兑换码：</p>
+                <div class="code-display">
+                    <input type="text" class="input" id="modalCodeInput" readonly>
+                    <button class="btn btn-primary mt-3" onclick="copyModalCode()">复制兑换码</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+            </div>
+        </div>
+<!-- 待分配弹窗 -->
+    <div class="modal" id="pendingModal">
+        <div class="modal-backdrop" onclick="this.parentElement.classList.remove('active')"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>⏳ 兑换码待分配</h3>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">📦</div>
+                    <p style="font-size: 18px; margin-bottom: 10px;">签到成功！</p>
+                    <p style="color: var(--color-text-secondary); line-height: 1.6;">
+                        当前兑换码库存不足，请联系管理员补充兑换码。<br>
+                        管理员补发后，您将收到通知。
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="this.closest('.modal').classList.remove('active')">我知道了</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

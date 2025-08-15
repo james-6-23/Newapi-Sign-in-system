@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的兑换码 - KYX 签到系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .page-header {
+            background: var(--color-bg-elevated);
+            border-bottom: 1px solid var(--color-border-primary);
+            padding: var(--spacing-xl) 0;
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .page-title {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .page-subtitle {
+            color: var(--color-text-secondary);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            color: var(--color-accent);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+
+        .back-btn:hover {
+            color: var(--color-accent-hover);
+        }
+
+        .search-bar {
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            border: 1px solid var(--color-border-primary);
+        }
+
+        .search-input {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-md);
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            font-size: var(--text-base);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .codes-container {
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-border-primary);
+            overflow: hidden;
+        }
+
+        .codes-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--color-border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .codes-count {
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--color-border-primary);
+        }
+
+        .pagination button {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border: 1px solid var(--color-border-primary);
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-focus);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination .current-page {
+            background: var(--color-accent);
+            color: var(--color-text-inverse);
+            border-color: var(--color-accent);
+        }
+
+        /* 兑换码项基础样式 */
+        .code-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border-primary);
+            border-radius: 0.75rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .code-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: var(--color-border-secondary);
+        }
+
+        /* 兑换码信息容器 */
+        .code-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 兑换码文本样式 */
+        .code-text {
+            font-family: var(--font-mono);
+            font-size: 1.125rem;
+            font-weight: 400;
+            background: rgba(139, 184, 232, 0.1);
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            letter-spacing: 0.05em;
+            color: oklch(0.707 0.022 261.325);
+            border: 1px solid rgba(139, 184, 232, 0.2);
+            font-feature-settings: "liga" 0, "calt" 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 420px;
+            flex-shrink: 0;
+        }
+
+        /* 时间显示样式 */
+        .code-date {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #9ca3af;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 金额显示样式 */
+        .code-amount {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 400;
+            color: #4ade80;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            white-space: nowrap;
+            width: 60px;
+            flex-shrink: 0;
+        }
+
+        /* 深色主题复制按钮样式（黑色背景+白色文字） */
+        .copy-btn-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #000000;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 80px;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .copy-btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            background: #1a1a1a;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .copy-btn-modern:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn-modern.copied {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: #fff;
+        }
+
+        .copy-btn-modern.copied svg {
+            animation: checkmark 0.3s ease;
+        }
+
+        @keyframes checkmark {
+            0% {
+                transform: scale(0.8);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* 兑换码类型标识 */
+        .code-item[data-type="gift"] {
+            border-left: 4px solid var(--color-warning);
+            background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%);
+        }
+
+        .code-item[data-type="checkin"] {
+            border-left: 4px solid var(--color-accent);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .codes-header {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+                align-items: flex-start;
+            }
+
+            /* 移动端复制按钮优化 */
+            .copy-btn-modern {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+                min-width: 70px;
+            }
+
+            .copy-btn-modern svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            /* 移动端布局优化 */
+            .code-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .code-info {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+            /* 移动端字体优化 */
+            .code-text {
+                font-size: 1rem;
+                padding: 0.25rem 0.5rem;
+                letter-spacing: 0.03em;
+                width: 100%;
+            }
+
+            .code-amount {
+                font-size: 0.9rem;
+                width: auto;
+            }
+
+            .code-date {
+                font-size: 0.8rem;
+                flex: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- 返回按钮 -->
+        <a href="index.html" class="back-btn">
+            <span>←</span>
+            <span>返回首页</span>
+        </a>
+
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1 class="page-title">我的兑换码</h1>
+            <p class="page-subtitle">管理您的所有兑换码</p>
+        </div>
+
+        <!-- 搜索栏 -->
+        <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="搜索兑换码...">
+        </div>
+
+        <!-- 兑换码容器 -->
+        <div class="codes-container">
+            <div class="codes-header">
+                <h3>兑换码列表</h3>
+                <span class="codes-count" id="codesCount">加载中...</span>
+            </div>
+
+            <div class="codes-grid" id="codesList">
+                <!-- 兑换码列表将在这里显示 -->
+                <div class="loading-state">
+                    <div class="skeleton-loader" style="height: 60px; margin: 10px; border-radius: 8px;"></div>
+                    <div class="skeleton-loader" style="height: 60px; margin: 10px; border-radius: 8px;"></div>
+                    <div class="skeleton-loader" style="height: 60px; margin: 10px; border-radius: 8px;"></div>
+                </div>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination" id="pagination" style="display: none;">
+                <button id="prevBtn">上一页</button>
+                <span id="pageInfo">1 / 1</span>
+                <button id="nextBtn">下一页</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        // 页面状态
+        const PageState = {
+            currentPage: 1,
+            totalPages: 1,
+            totalCodes: 0,
+            searchQuery: '',
+            isSearching: false,
+            codes: []
+        };
+
+        // 初始化页面
+        async function initCodesPage() {
+            try {
+                // 检查登录状态
+                const user = await utils.checkAuth();
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // 绑定事件
+                bindEvents();
+
+                // 加载兑换码
+                await loadCodes();
+            } catch (error) {
+                console.error('Initialize codes page error:', error);
+                utils.showToast('页面初始化失败', 'error');
+            }
+        }
+
+        // 绑定事件
+        function bindEvents() {
+            // 搜索输入
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        const query = e.target.value.trim();
+                        if (query !== PageState.searchQuery) {
+                            PageState.searchQuery = query;
+                            PageState.currentPage = 1;
+                            loadCodes();
+                        }
+                    }, 500);
+                });
+            }
+
+            // 分页按钮
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    if (PageState.currentPage > 1) {
+                        PageState.currentPage--;
+                        loadCodes();
+                    }
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    if (PageState.currentPage < PageState.totalPages) {
+                        PageState.currentPage++;
+                        loadCodes();
+                    }
+                });
+            }
+        }
+
+        // 加载兑换码
+        async function loadCodes() {
+            try {
+                const params = {
+                    page: PageState.currentPage,
+                    limit: 20
+                };
+
+                if (PageState.searchQuery) {
+                    params.search = PageState.searchQuery;
+                }
+
+                const data = await utils.get(CONFIG.API_ENDPOINTS.CHECKIN.RECORDS, params);
+
+                if (data.success && data.records) {
+                    PageState.codes = data.records.filter(record => record.redemption_code);
+                    PageState.totalCodes = PageState.codes.length;
+
+                    updateCodesDisplay();
+                    updatePagination();
+                    updateCodesCount();
+                }
+            } catch (error) {
+                console.error('Load codes error:', error);
+                utils.showToast('加载兑换码失败', 'error');
+            }
+        }
+
+        // 更新兑换码显示
+        function updateCodesDisplay() {
+            const codesList = document.getElementById('codesList');
+
+            if (PageState.codes.length === 0) {
+                codesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📦</div>
+                        <p>${PageState.searchQuery ? '没有找到匹配的兑换码' : '暂无兑换码'}</p>
+                        <p class="text-sm text-secondary">${PageState.searchQuery ? '尝试其他关键词' : '完成签到后即可获得兑换码'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const sortedCodes = PageState.codes.sort((a, b) => {
+                const dateA = new Date(a.check_in_date || a.created_at);
+                const dateB = new Date(b.check_in_date || b.created_at);
+                return dateB - dateA;
+            });
+
+            codesList.innerHTML = sortedCodes.map(code => {
+                const sourceIcon = code.distribution_type === 'gift' ? '🎁' : '📅';
+                const sourceText = code.distribution_type === 'gift' ? '系统赠送' : '签到获得';
+
+                // 格式化时间，精确到毫秒
+                const timestamp = new Date(code.check_in_date || code.created_at);
+                const formattedTime = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')} ${String(timestamp.getHours()).padStart(2, '0')}:${String(timestamp.getMinutes()).padStart(2, '0')}:${String(timestamp.getSeconds()).padStart(2, '0')}.${String(timestamp.getMilliseconds()).padStart(3, '0')}`;
+
+                return `
+                    <div class="code-item" data-code="${code.redemption_code}" data-type="${code.distribution_type || 'checkin'}">
+                        <div class="code-info">
+                            <span class="code-text">${code.redemption_code}</span>
+                            ${code.amount ? `<span class="code-amount">$${code.amount}</span>` : ''}
+                            <span class="code-date">
+                                ${sourceIcon} ${sourceText} - ${formattedTime}
+                            </span>
+                        </div>
+                        <button class="copy-btn-modern" onclick="copyCode('${code.redemption_code}', this)" title="复制兑换码">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                            </svg>
+                            <span>复制</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 更新分页
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('pageInfo');
+
+            if (PageState.totalPages <= 1) {
+                pagination.style.display = 'none';
+                return;
+            }
+
+            pagination.style.display = 'flex';
+            prevBtn.disabled = PageState.currentPage <= 1;
+            nextBtn.disabled = PageState.currentPage >= PageState.totalPages;
+            pageInfo.textContent = `${PageState.currentPage} / ${PageState.totalPages}`;
+        }
+
+        // 更新兑换码数量
+        function updateCodesCount() {
+            const codesCount = document.getElementById('codesCount');
+            codesCount.textContent = `共 ${PageState.totalCodes} 个兑换码`;
+        }
+
+        // 复制兑换码
+        async function copyCode(code, button) {
+            try {
+                await navigator.clipboard.writeText(code);
+
+                // 保存原始内容
+                const originalHTML = button.innerHTML;
+
+                button.classList.add('copied');
+
+                // 检查是否是现代化按钮
+                if (button.classList.contains('copy-btn-modern')) {
+                    button.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <span>已复制</span>
+                    `;
+                } else {
+                    button.innerHTML = '<span>✓</span>';
+                }
+
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.classList.remove('copied');
+                }, 2000);
+
+                utils.showToast('兑换码已复制', 'success');
+            } catch (error) {
+                utils.showToast('复制失败，请手动复制', 'error');
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initCodesPage);
+    </script>
+</body>
+
+</html>

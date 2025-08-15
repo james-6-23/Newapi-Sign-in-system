@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYX 签到系统 - 登录预览</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 背景装饰层 */
+        .bg-decoration {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(66, 133, 244, 0.10) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(52, 168, 83, 0.10) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .bg-grid-pattern {
+            position: fixed;
+            inset: 0;
+            background-image: 
+                repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 50px),
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 50px);
+            background-size: 50px 50px;
+            animation: gridMove 30s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes gridMove {
+            0% {
+                background-position: 0 0, 0 0;
+                filter: hue-rotate(0deg);
+            }
+            100% {
+                background-position: 200px 200px, 200px 200px;
+                filter: hue-rotate(15deg);
+            }
+        }
+
+        .bg-noise-pattern {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.07;
+            mix-blend-mode: soft-light;
+            background-size: cover;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.8'/></svg>");
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .bg-grid-pattern {
+                animation: none !important;
+            }
+        }
+
+        /* 自定义样式 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px) saturate(140%);
+            -webkit-backdrop-filter: blur(16px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+
+        .glass-button {
+            background: rgba(59, 130, 246, 0.2);
+            backdrop-filter: blur(8px) saturate(120%);
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .glass-button:hover {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: rgba(59, 130, 246, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px) saturate(120%);
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen">
+    <!-- 背景装饰层 -->
+    <div class="bg-decoration"></div>
+    <div class="bg-grid-pattern"></div>
+    <div class="bg-noise-pattern"></div>
+
+    <div class="min-h-screen bg-black/35 backdrop-blur-sm backdrop-saturate-120 flex items-center justify-center p-4 relative z-10">
+        <div class="w-full max-w-md">
+            <!-- 登录卡片 -->
+            <div class="glass-card rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+                <!-- 卡片光效 -->
+                <div class="absolute inset-0 bg-gradient-to-br from-white/18 via-transparent to-white/8 pointer-events-none rounded-2xl"></div>
+                
+                <div class="relative z-10">
+                    <!-- 标题区域 -->
+                    <div class="text-center mb-8">
+                        <div class="text-4xl mb-4">📅</div>
+                        <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
+                            KYX 签到系统
+                        </h1>
+                        <p class="text-gray-400 text-sm">
+                            使用 Linux Do 账号登录开始您的修仙之旅
+                        </p>
+                    </div>
+
+                    <!-- 登录按钮 -->
+                    <div class="space-y-4">
+                        <button
+                            onclick="showDemo()"
+                            class="w-full glass-button text-white font-medium py-4 px-6 rounded-xl flex items-center justify-center space-x-3 group"
+                        >
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 2C5.58 2 2 5.58 2 10s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" clip-rule="evenodd" />
+                            </svg>
+                            <span>使用 Linux Do 登录</span>
+                            <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+
+                        <!-- 功能预览 -->
+                        <div class="mt-8 space-y-3">
+                            <div class="text-center text-sm text-gray-400 mb-4">系统功能</div>
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div class="feature-card rounded-lg p-3 text-center">
+                                    <div class="text-lg mb-1">✅</div>
+                                    <div class="text-gray-300">每日签到</div>
+                                </div>
+                                <div class="feature-card rounded-lg p-3 text-center">
+                                    <div class="text-lg mb-1">🎯</div>
+                                    <div class="text-gray-300">等级系统</div>
+                                </div>
+                                <div class="feature-card rounded-lg p-3 text-center">
+                                    <div class="text-lg mb-1">🎰</div>
+                                    <div class="text-gray-300">转盘抽奖</div>
+                                </div>
+                                <div class="feature-card rounded-lg p-3 text-center">
+                                    <div class="text-lg mb-1">💰</div>
+                                    <div class="text-gray-300">兑换码</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 底部信息 -->
+                    <div class="mt-8 text-center text-xs text-gray-500">
+                        <p>登录即表示您同意我们的服务条款和隐私政策</p>
+                        <p class="mt-2">© 2024 KYX 签到系统</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 演示弹窗 -->
+    <div id="demoModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 hidden">
+        <div class="glass-card rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+            <h3 class="text-2xl font-bold text-white mb-4">🎉 预览模式</h3>
+            <p class="text-gray-300 mb-6">这是登录界面的预览版本。<br>实际使用需要配置 Linux Do OAuth2。</p>
+            <div class="space-y-3 mb-6">
+                <p class="text-sm text-gray-400">完整功能包括：</p>
+                <div class="text-left space-y-2 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-400">✓</span>
+                        <span>Linux Do OAuth2 登录</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-400">✓</span>
+                        <span>每日签到系统</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-400">✓</span>
+                        <span>13级修仙境界</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-400">✓</span>
+                        <span>转盘抽奖系统</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-green-400">✓</span>
+                        <span>兑换码管理</span>
+                    </div>
+                </div>
+            </div>
+            <button
+                onclick="closeDemo()"
+                class="glass-button text-white py-2 px-6 rounded-lg"
+            >
+                关闭
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function showDemo() {
+            document.getElementById('demoModal').classList.remove('hidden');
+        }
+
+        function closeDemo() {
+            document.getElementById('demoModal').classList.add('hidden');
+        }
+
+        // 点击背景关闭弹窗
+        document.getElementById('demoModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDemo();
+            }
+        });
+    </script>
+</body>
+</html>

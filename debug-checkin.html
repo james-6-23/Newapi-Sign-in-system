@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>签到系统调试工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .table th, .table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .table th {
+            background-color: #f8f9fa;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>KYX 签到系统调试工具</h1>
+    
+    <div class="container">
+        <h2>系统状态检查</h2>
+        <button onclick="checkSystemStatus()">检查系统状态</button>
+        <button onclick="checkUserStatus()">检查用户状态</button>
+        <button onclick="testCheckin()">测试签到</button>
+        <div id="loading" class="loading">检查中...</div>
+        <div id="systemStatus"></div>
+    </div>
+
+    <div class="container">
+        <h2>数据库状态</h2>
+        <div id="databaseStatus"></div>
+    </div>
+
+    <div class="container">
+        <h2>用户信息</h2>
+        <div id="userInfo"></div>
+    </div>
+
+    <div class="container">
+        <h2>签到配置</h2>
+        <div id="checkinConfig"></div>
+    </div>
+
+    <div class="container">
+        <h2>错误日志</h2>
+        <div id="errorLog"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        let errorLog = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleString();
+            errorLog.push({ timestamp, message, type });
+            updateErrorLog();
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function updateErrorLog() {
+            const errorLogDiv = document.getElementById('errorLog');
+            errorLogDiv.innerHTML = errorLog.map(entry => 
+                `<div class="status ${entry.type}">
+                    <strong>${entry.timestamp}</strong>: ${entry.message}
+                </div>`
+            ).join('');
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        async function apiRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${data.error || data.message || 'Unknown error'}`);
+                }
+
+                return data;
+            } catch (error) {
+                log(`API请求失败 (${url}): ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function checkSystemStatus() {
+            showLoading(true);
+            try {
+                log('开始检查系统状态...');
+                const data = await apiRequest('/api/debug/status');
+                
+                displaySystemStatus(data);
+                log('系统状态检查完成', 'success');
+            } catch (error) {
+                log(`系统状态检查失败: ${error.message}`, 'error');
+                document.getElementById('systemStatus').innerHTML = 
+                    `<div class="status error">系统状态检查失败: ${error.message}</div>`;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displaySystemStatus(data) {
+            const statusDiv = document.getElementById('systemStatus');
+            const dbDiv = document.getElementById('databaseStatus');
+            const configDiv = document.getElementById('checkinConfig');
+
+            // 系统状态
+            statusDiv.innerHTML = `
+                <div class="status ${data.success ? 'success' : 'error'}">
+                    系统状态: ${data.success ? '正常' : '异常'}
+                </div>
+                <p><strong>检查时间:</strong> ${data.timestamp}</p>
+                <p><strong>数据库已初始化:</strong> ${data.database.initialized ? '是' : '否'}</p>
+            `;
+
+            // 数据库状态
+            const tableRows = Object.entries(data.database.tables).map(([name, info]) => 
+                `<tr>
+                    <td>${name}</td>
+                    <td class="${info.exists ? 'success' : 'error'}">${info.exists ? '存在' : '不存在'}</td>
+                    <td>${info.count !== undefined ? info.count : (info.error || 'N/A')}</td>
+                </tr>`
+            ).join('');
+
+            dbDiv.innerHTML = `
+                <table class="table">
+                    <thead>
+                        <tr><th>表名</th><th>状态</th><th>记录数/错误</th></tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            `;
+
+            // 签到配置
+            let configHtml = `<p><strong>可用兑换码数量:</strong> ${data.checkin.available_codes}</p>`;
+            
+            if (Array.isArray(data.checkin.rewards_config)) {
+                const rewardRows = data.checkin.rewards_config.map(reward => 
+                    `<tr>
+                        <td>${reward.reward_type}</td>
+                        <td>${reward.condition_value}</td>
+                        <td>$${reward.amount}</td>
+                        <td>${reward.description}</td>
+                    </tr>`
+                ).join('');
+
+                configHtml += `
+                    <h4>奖励配置</h4>
+                    <table class="table">
+                        <thead>
+                            <tr><th>类型</th><th>条件值</th><th>金额</th><th>描述</th></tr>
+                        </thead>
+                        <tbody>${rewardRows}</tbody>
+                    </table>
+                `;
+            } else {
+                configHtml += `<div class="status error">奖励配置加载失败: ${data.checkin.rewards_config.error}</div>`;
+            }
+
+            configDiv.innerHTML = configHtml;
+        }
+
+        async function checkUserStatus() {
+            showLoading(true);
+            try {
+                log('检查用户状态...');
+                const userData = await apiRequest('/api/user');
+                const checkinData = await apiRequest('/api/checkin/status');
+                
+                const userDiv = document.getElementById('userInfo');
+                userDiv.innerHTML = `
+                    <div class="status success">用户已登录</div>
+                    <p><strong>用户名:</strong> ${userData.user.username}</p>
+                    <p><strong>用户ID:</strong> ${userData.user.id}</p>
+                    <p><strong>Linux Do ID:</strong> ${userData.user.linux_do_id}</p>
+                    <p><strong>今日已签到:</strong> ${checkinData.checkedIn ? '是' : '否'}</p>
+                    ${checkinData.checkIn ? `<p><strong>签到信息:</strong> <pre>${JSON.stringify(checkinData.checkIn, null, 2)}</pre></p>` : ''}
+                `;
+                
+                log('用户状态检查完成', 'success');
+            } catch (error) {
+                log(`用户状态检查失败: ${error.message}`, 'error');
+                document.getElementById('userInfo').innerHTML = 
+                    `<div class="status error">用户状态检查失败: ${error.message}</div>
+                     <p>请确保已登录系统</p>`;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function testCheckin() {
+            showLoading(true);
+            try {
+                log('开始测试签到...');
+                const data = await apiRequest('/api/checkin', { method: 'POST' });
+                
+                const statusDiv = document.getElementById('systemStatus');
+                statusDiv.innerHTML += `
+                    <div class="status ${data.success ? 'success' : 'warning'}">
+                        签到测试结果: ${data.message}
+                    </div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+                log(`签到测试完成: ${data.message}`, data.success ? 'success' : 'warning');
+            } catch (error) {
+                log(`签到测试失败: ${error.message}`, 'error');
+                const statusDiv = document.getElementById('systemStatus');
+                statusDiv.innerHTML += `
+                    <div class="status error">签到测试失败: ${error.message}</div>
+                `;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 页面加载时自动检查系统状态
+        window.addEventListener('load', () => {
+            log('页面加载完成，开始自动检查系统状态');
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>

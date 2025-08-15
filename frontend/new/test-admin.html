@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台测试页面</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .section h2 {
+            margin-bottom: 1rem;
+            color: #0066cc;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            background: #0f0f0f;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 8px;
+            outline: none;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #0066cc;
+        }
+        .btn {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 1rem;
+            margin-bottom: 0.5rem;
+            transition: opacity 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .btn-secondary {
+            background: #666;
+        }
+        .btn-success {
+            background: #10b981;
+        }
+        .btn-danger {
+            background: #ef4444;
+        }
+        .result {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .error {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .info {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 KYX 管理后台测试工具</h1>
+        <p>这个页面可以帮助你测试管理后台的各种功能。</p>
+
+        <!-- 基本配置 -->
+        <div class="section">
+            <h2>⚙️ 基本配置</h2>
+            <div class="form-group">
+                <label for="baseUrl">管理后台地址:</label>
+                <input type="text" id="baseUrl" value="https://your-admin-worker.workers.dev" placeholder="输入你的管理后台地址">
+            </div>
+            <div class="form-group">
+                <label for="username">用户名:</label>
+                <input type="text" id="username" value="admin" placeholder="管理员用户名">
+            </div>
+            <div class="form-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" value="admin123" placeholder="管理员密码">
+            </div>
+        </div>
+
+        <!-- 登录测试 -->
+        <div class="section">
+            <h2>🔐 登录测试</h2>
+            <button class="btn" onclick="testLogin()">测试登录</button>
+            <button class="btn btn-secondary" onclick="testLogout()">测试登出</button>
+            <div id="loginResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- API 测试 -->
+        <div class="section">
+            <h2>📊 API 测试</h2>
+            <button class="btn" onclick="testStats()">获取统计数据</button>
+            <button class="btn" onclick="testCodes()">获取兑换码列表</button>
+            <button class="btn" onclick="testUsers()">获取用户列表</button>
+            <button class="btn" onclick="testCheckins()">获取签到记录</button>
+            <div id="apiResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- 搜索测试 -->
+        <div class="section">
+            <h2>🔍 搜索测试</h2>
+            <div class="form-group">
+                <label for="searchQuery">搜索关键词:</label>
+                <input type="text" id="searchQuery" value="TEST" placeholder="输入要搜索的兑换码">
+            </div>
+            <button class="btn" onclick="testSearch()">搜索兑换码</button>
+            <div id="searchResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- 密码生成工具 -->
+        <div class="section">
+            <h2>🔑 密码生成工具</h2>
+            <div class="form-group">
+                <label for="newUsername">新用户名:</label>
+                <input type="text" id="newUsername" value="testadmin" placeholder="输入新管理员用户名">
+            </div>
+            <div class="form-group">
+                <label for="newPassword">新密码:</label>
+                <input type="text" id="newPassword" value="SecurePass123!" placeholder="输入新密码">
+            </div>
+            <button class="btn btn-success" onclick="generatePassword()">生成密码哈希</button>
+            <div id="passwordResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- 页面测试 -->
+        <div class="section">
+            <h2>🌐 页面测试</h2>
+            <button class="btn" onclick="openLoginPage()">打开登录页面</button>
+            <button class="btn" onclick="openAdminPage()">打开管理页面</button>
+            <div id="pageResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let sessionCookie = '';
+
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = content;
+        }
+
+        function getBaseUrl() {
+            return document.getElementById('baseUrl').value.replace(/\/$/, '');
+        }
+
+        async function testLogin() {
+            const baseUrl = getBaseUrl();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                showResult('loginResult', '正在登录...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/admin/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // 提取 session cookie
+                    const setCookie = response.headers.get('set-cookie');
+                    if (setCookie) {
+                        const match = setCookie.match(/admin_session=([^;]+)/);
+                        if (match) {
+                            sessionCookie = match[1];
+                        }
+                    }
+                    
+                    showResult('loginResult', `✅ 登录成功!\n响应: ${JSON.stringify(data, null, 2)}\nSession: ${sessionCookie}`, 'success');
+                } else {
+                    showResult('loginResult', `❌ 登录失败!\n状态: ${response.status}\n响应: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('loginResult', `❌ 登录错误: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLogout() {
+            const baseUrl = getBaseUrl();
+
+            try {
+                showResult('loginResult', '正在登出...', 'info');
+                
+                const response = await fetch(`${baseUrl}/api/admin/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Cookie': `admin_session=${sessionCookie}`
+                    }
+                });
+
+                if (response.ok) {
+                    sessionCookie = '';
+                    showResult('loginResult', '✅ 登出成功!', 'success');
+                } else {
+                    showResult('loginResult', `❌ 登出失败! 状态: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                showResult('loginResult', `❌ 登出错误: ${error.message}`, 'error');
+            }
+        }
+
+        async function apiRequest(endpoint) {
+            const baseUrl = getBaseUrl();
+            
+            if (!sessionCookie) {
+                showResult('apiResult', '❌ 请先登录!', 'error');
+                return;
+            }
+
+            try {
+                showResult('apiResult', `正在请求 ${endpoint}...`, 'info');
+                
+                const response = await fetch(`${baseUrl}${endpoint}`, {
+                    headers: {
+                        'Cookie': `admin_session=${sessionCookie}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('apiResult', `✅ 请求成功!\n端点: ${endpoint}\n响应: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('apiResult', `❌ 请求失败!\n端点: ${endpoint}\n状态: ${response.status}\n响应: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('apiResult', `❌ 请求错误: ${error.message}`, 'error');
+            }
+        }
+
+        function testStats() {
+            apiRequest('/api/admin/stats');
+        }
+
+        function testCodes() {
+            apiRequest('/api/admin/codes');
+        }
+
+        function testUsers() {
+            apiRequest('/api/admin/users');
+        }
+
+        function testCheckins() {
+            apiRequest('/api/admin/checkins');
+        }
+
+        async function testSearch() {
+            const query = document.getElementById('searchQuery').value;
+            apiRequest(`/api/admin/codes/search?q=${encodeURIComponent(query)}`);
+        }
+
+        // 密码生成工具（复制自 generate-admin-password.js）
+        function generateSalt() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 16; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        async function hashPassword(password, salt) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password + salt);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function generatePassword() {
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+
+            if (!username || !password) {
+                showResult('passwordResult', '❌ 请输入用户名和密码!', 'error');
+                return;
+            }
+
+            try {
+                showResult('passwordResult', '正在生成密码哈希...', 'info');
+                
+                const salt = generateSalt();
+                const hash = await hashPassword(password, salt);
+                const now = new Date().toISOString();
+                
+                const sql = `INSERT INTO admins (username, password_hash, salt, email, created_at) VALUES ('${username}', '${hash}', '${salt}', 'admin@example.com', '${now}');`;
+                
+                const result = `✅ 密码哈希生成成功!
+
+用户名: ${username}
+密码: ${password}
+盐值: ${salt}
+哈希: ${hash}
+
+SQL 插入语句:
+${sql}
+
+Wrangler 命令:
+wrangler d1 execute kyx-checkin-system --command="${sql}"`;
+                
+                showResult('passwordResult', result, 'success');
+            } catch (error) {
+                showResult('passwordResult', `❌ 生成失败: ${error.message}`, 'error');
+            }
+        }
+
+        function openLoginPage() {
+            const baseUrl = getBaseUrl();
+            const url = `${baseUrl}/login`;
+            window.open(url, '_blank');
+            showResult('pageResult', `✅ 已打开登录页面: ${url}`, 'success');
+        }
+
+        function openAdminPage() {
+            const baseUrl = getBaseUrl();
+            const url = `${baseUrl}/`;
+            window.open(url, '_blank');
+            showResult('pageResult', `✅ 已打开管理页面: ${url}`, 'success');
+        }
+
+        // 页面加载时的提示
+        window.addEventListener('load', function() {
+            showResult('loginResult', '👋 欢迎使用 KYX 管理后台测试工具!\n\n请先配置管理后台地址，然后测试登录功能。', 'info');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "path": "d:\\GitHub_Project\\-Newapi-Sign-in-system\\qdTest\\new",
+  "desc": "这是一个KYX签到系统的前端项目，主要功能包括用户签到、兑换码管理、系统赠送等。项目采用现代化的深色主题设计，支持响应式布局，包含主页、管理页面、兑换码页面和登录页面等完整功能模块。",
+  "id": "9730f625bb5b4fcb8c2d3f2ca9e844fb",
+  "data": {
+    "spaceKey": "9730f625bb5b4fcb8c2d3f2ca9e844fb",
+    "connections": {
+      "webIDE": "https://9730f625bb5b4fcb8c2d3f2ca9e844fb.ap-singapore.cloudstudio.club",
+      "preview": "https://9730f625bb5b4fcb8c2d3f2ca9e844fb--{port}.ap-singapore.cloudstudio.club",
+      "api": "https://9730f625bb5b4fcb8c2d3f2ca9e844fb--api.ap-singapore.cloudstudio.club",
+      "pty": "https://9730f625bb5b4fcb8c2d3f2ca9e844fb--pty.ap-singapore.cloudstudio.club"
+    }
+  },
+  "config": {
+    "api": "https://9730f625bb5b4fcb8c2d3f2ca9e844fb--api.ap-singapore.cloudstudio.club",
+    "pty": "https://9730f625bb5b4fcb8c2d3f2ca9e844fb--pty.ap-singapore.cloudstudio.club",
+    "region": "ap-shanghai",
+    "spaceKey": "9730f625bb5b4fcb8c2d3f2ca9e844fb"
+  }
+}

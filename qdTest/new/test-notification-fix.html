@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知修复测试 - KYX 签到系统</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-border-primary);
+        }
+        
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border-secondary);
+        }
+        
+        .test-title {
+            font-size: var(--text-lg);
+            font-weight: var(--font-semibold);
+            margin-bottom: 1rem;
+            color: var(--color-accent);
+        }
+        
+        .test-description {
+            color: var(--color-text-secondary);
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .test-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            color: white;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-primary { background: #3b82f6; }
+        .btn-success { background: #10b981; }
+        .btn-warning { background: #f59e0b; }
+        .btn-danger { background: #ef4444; }
+        .btn-info { background: #06b6d4; }
+        .btn-purple { background: #8b5cf6; }
+        
+        .status-display {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--color-bg-primary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border-primary);
+            font-family: monospace;
+            font-size: var(--text-sm);
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--color-accent);
+            text-decoration: none;
+            margin-bottom: 2rem;
+            transition: color var(--transition-fast);
+        }
+        
+        .back-link:hover {
+            color: var(--color-accent-hover);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <a href="index.html" class="back-link">
+            ← 返回主页
+        </a>
+        
+        <h1 style="text-align: center; margin-bottom: 2rem; color: var(--color-text-primary);">
+            🔧 通知系统修复测试
+        </h1>
+        
+        <!-- 通知状态管理测试 -->
+        <div class="test-section">
+            <div class="test-title">📋 通知状态管理</div>
+            <div class="test-description">
+                测试通知状态的持久化存储和防重复机制。这些功能确保系统赠送弹窗只显示一次。
+            </div>
+            <div class="test-buttons">
+                <button class="test-btn btn-info" onclick="window.checkNotificationState?.()">
+                    检查通知状态
+                </button>
+                <button class="test-btn btn-danger" onclick="window.clearNotificationState?.()">
+                    清除通知状态
+                </button>
+                <button class="test-btn btn-warning" onclick="showLocalStorageInfo()">
+                    查看存储信息
+                </button>
+            </div>
+            <div class="status-display" id="notificationStatus">等待操作...</div>
+        </div>
+        
+        <!-- API数据一致性测试 -->
+        <div class="test-section">
+            <div class="test-title">🔍 API数据一致性</div>
+            <div class="test-description">
+                验证通知API和兑换码记录API返回的数据是否一致，确保弹窗显示的兑换码与列表中的匹配。
+            </div>
+            <div class="test-buttons">
+                <button class="test-btn btn-primary" onclick="window.validateAPIData?.()">
+                    验证API数据
+                </button>
+                <button class="test-btn btn-success" onclick="window.forceRefreshCodes?.()">
+                    强制刷新兑换码
+                </button>
+                <button class="test-btn btn-info" onclick="testAPIConsistency()">
+                    详细一致性检查
+                </button>
+            </div>
+            <div class="status-display" id="apiStatus">等待操作...</div>
+        </div>
+        
+        <!-- 弹窗测试 -->
+        <div class="test-section">
+            <div class="test-title">🎁 弹窗功能测试</div>
+            <div class="test-description">
+                测试系统赠送弹窗的显示、关闭和数据刷新功能。
+            </div>
+            <div class="test-buttons">
+                <button class="test-btn btn-purple" onclick="window.testGiftModal?.()">
+                    测试赠送弹窗
+                </button>
+                <button class="test-btn btn-success" onclick="simulateNotification()">
+                    模拟通知处理
+                </button>
+                <button class="test-btn btn-warning" onclick="testDuplicatePrevention()">
+                    测试防重复机制
+                </button>
+            </div>
+            <div class="status-display" id="modalStatus">等待操作...</div>
+        </div>
+        
+        <!-- 综合调试 -->
+        <div class="test-section">
+            <div class="test-title">🐛 综合调试</div>
+            <div class="test-description">
+                综合调试功能，查看应用状态和数据流。
+            </div>
+            <div class="test-buttons">
+                <button class="test-btn btn-warning" onclick="window.debugDataState?.()">
+                    调试数据状态
+                </button>
+                <button class="test-btn btn-info" onclick="showAppState()">
+                    显示应用状态
+                </button>
+                <button class="test-btn btn-success" onclick="runFullDiagnostic()">
+                    完整诊断
+                </button>
+            </div>
+            <div class="status-display" id="debugStatus">等待操作...</div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+    
+    <script>
+        // 显示localStorage信息
+        function showLocalStorageInfo() {
+            const status = document.getElementById('notificationStatus');
+            try {
+                const processedNotifications = localStorage.getItem('processedNotifications');
+                const info = {
+                    'processedNotifications': processedNotifications ? JSON.parse(processedNotifications) : null,
+                    'localStorage大小': JSON.stringify(localStorage).length + ' 字符',
+                    '存储项数量': localStorage.length
+                };
+                status.textContent = JSON.stringify(info, null, 2);
+            } catch (error) {
+                status.textContent = '获取存储信息失败: ' + error.message;
+            }
+        }
+        
+        // 测试API一致性
+        async function testAPIConsistency() {
+            const status = document.getElementById('apiStatus');
+            status.textContent = '正在检查API一致性...';
+            
+            try {
+                // 这里会调用已有的validateAPIData函数
+                if (typeof window.validateAPIData === 'function') {
+                    await window.validateAPIData();
+                    status.textContent = 'API一致性检查完成，详情请查看控制台';
+                } else {
+                    status.textContent = 'validateAPIData函数未找到';
+                }
+            } catch (error) {
+                status.textContent = 'API一致性检查失败: ' + error.message;
+            }
+        }
+        
+        // 模拟通知处理
+        function simulateNotification() {
+            const status = document.getElementById('modalStatus');
+            const mockNotificationId = 'test_' + Date.now();
+            
+            status.textContent = `模拟处理通知ID: ${mockNotificationId}`;
+            
+            // 模拟添加到已处理列表
+            if (typeof AppState !== 'undefined') {
+                AppState.processedNotifications.add(mockNotificationId);
+                status.textContent += '\n已添加到处理列表';
+                
+                // 保存到localStorage
+                if (typeof window.saveProcessedNotifications === 'function') {
+                    window.saveProcessedNotifications();
+                    status.textContent += '\n已保存到localStorage';
+                }
+            }
+        }
+        
+        // 测试防重复机制
+        function testDuplicatePrevention() {
+            const status = document.getElementById('modalStatus');
+            const testId = 'duplicate_test_123';
+            
+            if (typeof AppState !== 'undefined') {
+                const wasProcessed = AppState.processedNotifications.has(testId);
+                
+                if (!wasProcessed) {
+                    AppState.processedNotifications.add(testId);
+                    status.textContent = `首次处理通知 ${testId} - 应该显示弹窗`;
+                } else {
+                    status.textContent = `通知 ${testId} 已处理过 - 不应显示弹窗`;
+                }
+                
+                // 再次测试
+                setTimeout(() => {
+                    const stillProcessed = AppState.processedNotifications.has(testId);
+                    status.textContent += `\n\n重复检查: ${stillProcessed ? '✅ 防重复机制正常' : '❌ 防重复机制失效'}`;
+                }, 1000);
+            } else {
+                status.textContent = 'AppState未定义，无法测试';
+            }
+        }
+        
+        // 显示应用状态
+        function showAppState() {
+            const status = document.getElementById('debugStatus');
+            
+            if (typeof AppState !== 'undefined') {
+                const state = {
+                    user: AppState.user ? '已登录' : '未登录',
+                    hasCheckedIn: AppState.hasCheckedIn,
+                    recentCodesCount: AppState.recentCodes?.length || 0,
+                    processedNotificationsCount: AppState.processedNotifications?.size || 0,
+                    showingAllCodes: AppState.showingAllCodes,
+                    loading: AppState.loading
+                };
+                status.textContent = JSON.stringify(state, null, 2);
+            } else {
+                status.textContent = 'AppState未定义';
+            }
+        }
+        
+        // 完整诊断
+        async function runFullDiagnostic() {
+            const status = document.getElementById('debugStatus');
+            status.textContent = '正在运行完整诊断...\n';
+            
+            const results = [];
+            
+            // 1. 检查全局对象
+            results.push('=== 全局对象检查 ===');
+            results.push(`AppState: ${typeof AppState !== 'undefined' ? '✅' : '❌'}`);
+            results.push(`CONFIG: ${typeof CONFIG !== 'undefined' ? '✅' : '❌'}`);
+            results.push(`utils: ${typeof utils !== 'undefined' ? '✅' : '❌'}`);
+            
+            // 2. 检查关键函数
+            results.push('\n=== 关键函数检查 ===');
+            const functions = ['checkNotifications', 'loadRecentCodes', 'showGiftModal', 'closeGiftModal'];
+            functions.forEach(fn => {
+                results.push(`${fn}: ${typeof window[fn] === 'function' ? '✅' : '❌'}`);
+            });
+            
+            // 3. 检查localStorage
+            results.push('\n=== 存储状态检查 ===');
+            try {
+                const stored = localStorage.getItem('processedNotifications');
+                results.push(`localStorage可用: ✅`);
+                results.push(`已处理通知: ${stored ? JSON.parse(stored).length : 0} 个`);
+            } catch (error) {
+                results.push(`localStorage错误: ❌ ${error.message}`);
+            }
+            
+            status.textContent = results.join('\n');
+        }
+        
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('通知修复测试页面已加载');
+            
+            // 显示初始状态
+            setTimeout(() => {
+                showAppState();
+                showLocalStorageInfo();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

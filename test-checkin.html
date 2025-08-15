@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>签到功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        .result {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .code-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>签到功能测试</h1>
+    
+    <div class="container">
+        <h2>测试操作</h2>
+        <button onclick="testCheckin()">测试签到</button>
+        <button onclick="checkStatus()">检查签到状态</button>
+        <button onclick="checkUser()">检查用户信息</button>
+        <button onclick="clearResults()">清空结果</button>
+    </div>
+
+    <div class="container">
+        <h2>测试结果</h2>
+        <div id="results"></div>
+    </div>
+
+    <!-- 兑换码弹窗 -->
+    <div class="modal" id="codeModal">
+        <div class="modal-content">
+            <h3>签到成功！</h3>
+            <p>恭喜您获得兑换码：</p>
+            <div class="code-display" id="codeDisplay">-</div>
+            <p>金额：<span id="amountDisplay">-</span> 元</p>
+            <button onclick="copyCode()">复制兑换码</button>
+            <button onclick="closeModal()">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        let currentCode = '';
+
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = new Date().toLocaleString();
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `[${timestamp}] ${message}`;
+            resultsDiv.appendChild(div);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function apiRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${data.error || data.message || 'Unknown error'}`);
+                }
+
+                return data;
+            } catch (error) {
+                log(`API请求失败 (${url}): ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function testCheckin() {
+            log('开始测试签到...');
+            try {
+                const data = await apiRequest('/api/checkin', { method: 'POST' });
+                
+                log(`签到响应: ${JSON.stringify(data, null, 2)}`);
+                
+                if (data.success) {
+                    if (data.status === 'completed' && data.redemptionCode) {
+                        log(`签到成功！获得兑换码: ${data.redemptionCode}，金额: ${data.amount}`, 'success');
+                        showCodeModal(data.redemptionCode, data.amount);
+                    } else if (data.status === 'pending_distribution') {
+                        log('签到成功！兑换码待管理员分配', 'warning');
+                    } else {
+                        log(`签到成功，但状态异常: ${data.status}`, 'warning');
+                    }
+                } else {
+                    log(`签到失败: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                log(`签到测试失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkStatus() {
+            log('检查签到状态...');
+            try {
+                const data = await apiRequest('/api/checkin/status');
+                log(`签到状态: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                log(`检查状态失败: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkUser() {
+            log('检查用户信息...');
+            try {
+                const data = await apiRequest('/api/user');
+                log(`用户信息: ${JSON.stringify(data, null, 2)}`);
+            } catch (error) {
+                log(`检查用户信息失败: ${error.message}`, 'error');
+            }
+        }
+
+        function showCodeModal(code, amount) {
+            currentCode = code;
+            document.getElementById('codeDisplay').textContent = code;
+            document.getElementById('amountDisplay').textContent = `$${parseFloat(amount || 0).toFixed(2)}`;
+            document.getElementById('codeModal').classList.add('active');
+            log(`显示兑换码弹窗: ${code}`, 'success');
+        }
+
+        function closeModal() {
+            document.getElementById('codeModal').classList.remove('active');
+            log('关闭兑换码弹窗');
+        }
+
+        async function copyCode() {
+            try {
+                await navigator.clipboard.writeText(currentCode);
+                log(`兑换码已复制: ${currentCode}`, 'success');
+                closeModal();
+            } catch (error) {
+                log(`复制失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载时检查用户状态
+        window.addEventListener('load', () => {
+            log('页面加载完成');
+            checkUser();
+        });
+    </script>
+</body>
+</html>

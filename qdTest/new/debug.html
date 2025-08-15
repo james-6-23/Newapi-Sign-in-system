@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调试页面 - KYX 签到系统</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .debug-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--color-border-primary);
+        }
+        
+        .debug-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+        
+        .debug-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--color-accent);
+        }
+        
+        .debug-info {
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .status-ok {
+            color: var(--color-success);
+        }
+        
+        .status-error {
+            color: var(--color-error);
+        }
+        
+        .debug-button {
+            margin: 5px;
+        }
+        
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: var(--color-bg-primary);
+            padding: 10px;
+            border-radius: var(--radius-md);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔧 调试页面</h1>
+        <p>此页面用于诊断登录和API连接问题</p>
+        
+        <div class="debug-section">
+            <div class="debug-title">1. 配置信息</div>
+            <div class="debug-info" id="configInfo">加载中...</div>
+        </div>
+        
+        <div class="debug-section">
+            <div class="debug-title">2. Cookie 状态</div>
+            <div class="debug-info" id="cookieInfo">检查中...</div>
+        </div>
+        
+        <div class="debug-section">
+            <div class="debug-title">3. API 连接测试</div>
+            <button class="btn btn-primary debug-button" onclick="testAPI()">测试 API 连接</button>
+            <button class="btn btn-secondary debug-button" onclick="testAuth()">测试认证状态</button>
+            <button class="btn btn-warning debug-button" onclick="clearStorage()">清除本地存储</button>
+            <div class="debug-info" id="apiTestResult"></div>
+        </div>
+        
+        <div class="debug-section">
+            <div class="debug-title">4. 控制台日志</div>
+            <div class="log-container" id="logContainer"></div>
+        </div>
+        
+        <div class="debug-section">
+            <div class="debug-title">5. 快速导航</div>
+            <button class="btn btn-primary debug-button" onclick="window.location.href='login.html'">前往登录页</button>
+            <button class="btn btn-secondary debug-button" onclick="window.location.href='index.html'">前往主页</button>
+            <button class="btn btn-ghost debug-button" onclick="window.location.href='admin.html'">前往管理后台</button>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        // 日志收集
+        const logs = [];
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        console.log = function(...args) {
+            logs.push({ type: 'log', message: args.join(' '), time: new Date().toLocaleTimeString() });
+            updateLogs();
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            logs.push({ type: 'error', message: args.join(' '), time: new Date().toLocaleTimeString() });
+            updateLogs();
+            originalError.apply(console, args);
+        };
+        
+        console.warn = function(...args) {
+            logs.push({ type: 'warn', message: args.join(' '), time: new Date().toLocaleTimeString() });
+            updateLogs();
+            originalWarn.apply(console, args);
+        };
+        
+        function updateLogs() {
+            const container = document.getElementById('logContainer');
+            container.innerHTML = logs.map(log => {
+                const color = log.type === 'error' ? 'var(--color-error)' : 
+                             log.type === 'warn' ? 'var(--color-warning)' : 
+                             'var(--color-text-primary)';
+                return `<div style="color: ${color}">[${log.time}] ${log.message}</div>`;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // 显示配置信息
+        function showConfig() {
+            const configInfo = document.getElementById('configInfo');
+            configInfo.innerHTML = `
+API Base URL: ${window.CONFIG.API_BASE_URL}
+User Info Endpoint: ${window.CONFIG.API_ENDPOINTS.AUTH.USER_INFO}
+Full URL: ${window.CONFIG.API_BASE_URL}${window.CONFIG.API_ENDPOINTS.AUTH.USER_INFO}
+Current Location: ${window.location.href}
+Protocol: ${window.location.protocol}
+Hostname: ${window.location.hostname}
+            `;
+        }
+        
+        // 显示Cookie信息
+        function showCookies() {
+            const cookieInfo = document.getElementById('cookieInfo');
+            const cookies = document.cookie;
+            if (cookies) {
+                cookieInfo.innerHTML = `Cookies:\n${cookies.split(';').map(c => c.trim()).join('\n')}`;
+            } else {
+                cookieInfo.innerHTML = '<span class="status-error">没有找到任何Cookie</span>';
+            }
+        }
+        
+        // 测试API连接
+        async function testAPI() {
+            const resultDiv = document.getElementById('apiTestResult');
+            resultDiv.innerHTML = '测试中...';
+            
+            try {
+                console.log('开始测试API连接...');
+                const testUrl = window.CONFIG.API_BASE_URL + '/api/user';
+                console.log('测试URL:', testUrl);
+                
+                const response = await fetch(testUrl, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('响应状态:', response.status);
+                const data = await response.json();
+                console.log('响应数据:', data);
+                
+                resultDiv.innerHTML = `
+<span class="${response.ok ? 'status-ok' : 'status-error'}">
+状态码: ${response.status}
+响应: ${JSON.stringify(data, null, 2)}
+</span>`;
+            } catch (error) {
+                console.error('API测试失败:', error);
+                resultDiv.innerHTML = `<span class="status-error">错误: ${error.message}</span>`;
+            }
+        }
+        
+        // 测试认证状态
+        async function testAuth() {
+            const resultDiv = document.getElementById('apiTestResult');
+            resultDiv.innerHTML = '检查认证状态...';
+            
+            try {
+                const user = await utils.checkAuth();
+                if (user) {
+                    resultDiv.innerHTML = `<span class="status-ok">已登录用户: ${JSON.stringify(user, null, 2)}</span>`;
+                } else {
+                    resultDiv.innerHTML = '<span class="status-error">未登录</span>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="status-error">认证检查失败: ${error.message}</span>`;
+            }
+        }
+        
+        // 清除本地存储
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            alert('已清除所有本地存储和Cookie');
+            location.reload();
+        }
+        
+        // 页面加载时执行
+        window.addEventListener('DOMContentLoaded', () => {
+            showConfig();
+            showCookies();
+            console.log('调试页面已加载');
+        });
+    </script>
+</body>
+</html>

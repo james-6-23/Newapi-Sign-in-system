@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYX 签到系统 - 超级管理后台 (预览版)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* CSS变量 - 与index-preview.html保持一致 */
+        :root {
+            --color-primary: #ffffff;
+            --color-secondary: #f5f5f5;
+            --color-accent: #0066cc;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+            --color-info: #3b82f6;
+            --color-bg-primary: #0f0f0f;
+            --color-bg-elevated: #1a1a1a;
+            --color-bg-overlay: rgba(0, 0, 0, 0.8);
+            --color-text-primary: #ffffff;
+            --color-text-secondary: #b3b3b3;
+            --color-border-primary: #333333;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --z-modal: 1000;
+            --z-modal-backdrop: 999;
+        }
+
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-base);
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* 背景装饰（与index-preview.html保持一致） */
+        .bg-decoration {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(66, 133, 244, 0.10) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(52, 168, 83, 0.10) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image:
+                repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 50px),
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 50px);
+            background-size: 50px 50px;
+            animation: gridMove 30s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes gridMove {
+            0% {
+                background-position: 0 0, 0 0;
+                filter: hue-rotate(0deg);
+            }
+            100% {
+                background-position: 200px 200px, 200px 200px;
+                filter: hue-rotate(15deg);
+            }
+        }
+
+        .noise-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.07;
+            mix-blend-mode: soft-light;
+            background-size: cover;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.8'/></svg>");
+        }
+
+        /* 降低动效偏好支持 */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+            position: relative;
+            z-index: 1;
+            background: rgba(0, 0, 0, 0.35);
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            backdrop-filter: blur(8px) saturate(120%);
+            min-height: 100vh;
+        }
+
+        .preview-notice {
+            background: rgba(0, 102, 204, 0.12);
+            border: 1px solid rgba(0, 102, 204, 0.38);
+            color: #b3d9ff;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            text-align: center;
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            backdrop-filter: blur(8px) saturate(120%);
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.08);
+            -webkit-backdrop-filter: blur(16px) saturate(140%);
+            backdrop-filter: blur(16px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 18px;
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: radial-gradient(120% 120% at 0% 0%, rgba(255, 255, 255, 0.18) 0%, transparent 45%),
+                radial-gradient(120% 120% at 100% 100%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #e6e6e6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.02em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .subtitle {
+            color: var(--color-text-secondary);
+            font-size: 0.9rem;
+            margin-top: var(--spacing-xs);
+            position: relative;
+            z-index: 1;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            position: relative;
+            z-index: 1;
+        }
+
+        .logout-btn {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.38);
+            color: #ffb3b3;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(239, 68, 68, 0.35);
+            background: rgba(239, 68, 68, 0.18);
+            border-color: rgba(239, 68, 68, 0.65);
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.06);
+            -webkit-backdrop-filter: blur(12px) saturate(140%);
+            backdrop-filter: blur(12px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 16px;
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+            overflow-x: auto;
+            gap: var(--spacing-xs);
+        }
+
+        .nav-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: var(--spacing-md) var(--spacing-lg);
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+        }
+
+        .nav-tab.active {
+            background: rgba(0, 102, 204, 0.12);
+            border: 1px solid rgba(0, 102, 204, 0.45);
+            color: #b3d9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 102, 204, 0.25);
+        }
+
+        .nav-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--color-text-primary);
+            transform: translateY(-1px);
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.06);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            backdrop-filter: blur(14px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 18px;
+            padding: var(--spacing-xl);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            min-height: 600px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            -webkit-backdrop-filter: blur(12px) saturate(140%);
+            backdrop-filter: blur(12px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 14px;
+            padding: var(--spacing-xl);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: radial-gradient(120% 120% at 0% 0%, rgba(255, 255, 255, 0.12) 0%, transparent 45%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        }
+
+        .stat-card h3 {
+            font-size: 0.875rem;
+            margin-bottom: var(--spacing-sm);
+            color: var(--color-text-secondary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card .number {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-xs);
+            color: var(--color-primary);
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-card small {
+            color: var(--color-text-secondary);
+            font-size: 0.75rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .level-card {
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .level-card::after {
+            background: radial-gradient(120% 120% at 0% 0%, rgba(16, 185, 129, 0.15) 0%, transparent 45%);
+        }
+
+        .experience-card {
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .experience-card::after {
+            background: radial-gradient(120% 120% at 0% 0%, rgba(245, 158, 11, 0.15) 0%, transparent 45%);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            backdrop-filter: blur(8px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: transparent;
+        }
+
+        th,
+        td {
+            padding: var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.06);
+            font-weight: 600;
+            color: var(--color-text-primary);
+            position: sticky;
+            top: 0;
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            backdrop-filter: blur(8px) saturate(120%);
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .level-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-accent), #4a90e2);
+            transition: width 0.3s ease;
+        }
+
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: none;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-block;
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+            margin-right: var(--spacing-xs);
+        }
+
+        .btn-primary {
+            background: rgba(0, 102, 204, 0.12);
+            border: 1px solid rgba(0, 102, 204, 0.38);
+            color: #b3d9ff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 102, 204, 0.25);
+            background: rgba(0, 102, 204, 0.18);
+            border-color: rgba(0, 102, 204, 0.65);
+        }
+
+        .btn-success {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.38);
+            color: #b6ffdf;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25);
+            background: rgba(16, 185, 129, 0.18);
+            border-color: rgba(16, 185, 129, 0.65);
+        }
+
+        .btn-warning {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.38);
+            color: #ffd699;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(245, 158, 11, 0.25);
+            background: rgba(245, 158, 11, 0.18);
+            border-color: rgba(245, 158, 11, 0.65);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.38);
+            color: #ffb3b3;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(239, 68, 68, 0.25);
+            background: rgba(239, 68, 68, 0.18);
+            border-color: rgba(239, 68, 68, 0.65);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            color: var(--color-text-primary);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.45);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--color-text-primary);
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--color-bg-overlay);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            z-index: var(--z-modal);
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.08);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+            backdrop-filter: blur(18px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 16px;
+            padding: var(--spacing-xl);
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+            position: relative;
+        }
+
+        .modal-content::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: radial-gradient(120% 120% at 0% 0%, rgba(255, 255, 255, 0.15) 0%, transparent 45%);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-text-primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            color: var(--color-error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--color-text-secondary);
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top: 2px solid var(--color-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: var(--spacing-sm);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .alert {
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            border-left: 4px solid;
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            backdrop-filter: blur(8px) saturate(120%);
+            position: relative;
+            z-index: 1;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.12);
+            color: #b6ffdf;
+            border-color: var(--color-success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ffb3b3;
+            border-color: var(--color-error);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.12);
+            color: #ffd699;
+            border-color: var(--color-warning);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.12);
+            color: #b3d9ff;
+            border-color: var(--color-info);
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: var(--spacing-md);
+            }
+
+            .header {
+                flex-direction: column;
+                gap: var(--spacing-md);
+                text-align: center;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+                gap: var(--spacing-xs);
+            }
+
+            .nav-tab {
+                margin-bottom: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: var(--spacing-lg);
+            }
+
+            .modal-content {
+                margin: var(--spacing-md);
+                width: calc(100% - 2rem);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 背景层，与index-preview.html保持一致 -->
+    <div class="bg-decoration"></div>
+    <div class="grid-bg"></div>
+    <div class="noise-overlay"></div>
+
+    <div class="container">
+        <div class="preview-notice">
+            🎯 这是KYX签到系统超级管理后台的预览版，所有数据为模拟数据，默认账号：admin / 123456
+        </div>
+
+        <div class="header">
+            <div>
+                <h1>KYX 签到系统 - 超级管理后台</h1>
+                <div class="subtitle">13级修仙境界等级体系 & 完整管理员权限控制</div>
+            </div>
+            <div class="user-info">
+                <span id="adminUsername">admin</span>
+                <button class="logout-btn" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('dashboard')">📊 仪表盘</button>
+            <button class="nav-tab" onclick="showTab('codes')">🎫 兑换码</button>
+            <button class="nav-tab" onclick="showTab('users')">👥 用户管理</button>
+            <button class="nav-tab" onclick="showTab('levels')">🏔️ 等级配置</button>
+            <button class="nav-tab" onclick="showTab('experience')">⚡ 经验规则</button>
+            <button class="nav-tab" onclick="showTab('rewards')">🎁 奖励配置</button>
+            <button class="nav-tab" onclick="showTab('leaderboard')">🏆 排行榜</button>
+        </div>
+
+        <div class="content">
+            <!-- 仪表盘 -->
+            <div id="dashboard" class="tab-content active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>总兑换码</h3>
+                        <div class="number" id="totalCodes">1,250</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>未分配</h3>
+                        <div class="number" id="undistributedCodes">384</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>已分配</h3>
+                        <div class="number" id="distributedCodes">866</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>总用户数</h3>
+                        <div class="number" id="totalUsers">5,678</div>
+                    </div>
+                    <div class="stat-card level-card">
+                        <h3>等级系统</h3>
+                        <div class="number" id="totalLevels">13</div>
+                        <small>最高等级: <span id="maxLevel">道祖</span></small>
+                    </div>
+                    <div class="stat-card experience-card">
+                        <h3>平均经验</h3>
+                        <div class="number" id="avgExperience">2,456</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>活跃用户</h3>
+                        <div class="number" id="activeUsers">3,421</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>总签到数</h3>
+                        <div class="number" id="totalCheckins">89,543</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 兑换码管理 -->
+            <div id="codes" class="tab-content">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="showImportCodesModal()">导入兑换码</button>
+                    <button class="btn btn-success" onclick="refreshCodes()">刷新</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>兑换码</th>
+                                <th>金额</th>
+                                <th>状态</th>
+                                <th>分配用户</th>
+                                <th>创建时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="codesTableBody">
+                            <tr>
+                                <td><code>KYX2024001</code></td>
+                                <td>¥50</td>
+                                <td><span class="level-badge" style="background: rgba(16, 185, 129, 0.2);">未分配</span></td>
+                                <td>-</td>
+                                <td>2024-01-15</td>
+                                <td>
+                                    <button class="btn btn-warning" onclick="assignCode('KYX2024001')">分配</button>
+                                    <button class="btn btn-danger" onclick="deleteCode('KYX2024001')">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>KYX2024002</code></td>
+                                <td>¥100</td>
+                                <td><span class="level-badge" style="background: rgba(59, 130, 246, 0.2);">已分配</span></td>
+                                <td>user123</td>
+                                <td>2024-01-15</td>
+                                <td>
+                                    <button class="btn btn-secondary" onclick="viewCodeDetails('KYX2024002')">详情</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 用户管理 -->
+            <div id="users" class="tab-content">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="showAddUserModal()">添加用户</button>
+                    <button class="btn btn-success" onclick="refreshUsers()">刷新</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>等级</th>
+                                <th>经验值</th>
+                                <th>签到天数</th>
+                                <th>注册时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td>user123</td>
+                                <td><span class="level-badge" style="background: rgba(245, 158, 11, 0.2);">筑基期</span></td>
+                                <td>2,456</td>
+                                <td>45</td>
+                                <td>2024-01-01</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editUser('user123')">编辑</button>
+                                    <button class="btn btn-warning" onclick="resetUserProgress('user123')">重置</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>user456</td>
+                                <td><span class="level-badge" style="background: rgba(16, 185, 129, 0.2);">金丹期</span></td>
+                                <td>5,234</td>
+                                <td>78</td>
+                                <td>2023-12-15</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editUser('user456')">编辑</button>
+                                    <button class="btn btn-warning" onclick="resetUserProgress('user456')">重置</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 等级配置 -->
+            <div id="levels" class="tab-content">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="showAddLevelModal()">添加等级</button>
+                    <button class="btn btn-success" onclick="refreshLevels()">刷新</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>等级</th>
+                                <th>名称</th>
+                                <th>所需经验</th>
+                                <th>奖励金额</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="levelsTableBody">
+                            <tr>
+                                <td>1</td>
+                                <td>练气期</td>
+                                <td>0</td>
+                                <td>¥10</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editLevel(1)">编辑</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>筑基期</td>
+                                <td>1,000</td>
+                                <td>¥25</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editLevel(2)">编辑</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>金丹期</td>
+                                <td>3,000</td>
+                                <td>¥50</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editLevel(3)">编辑</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 经验规则 -->
+            <div id="experience" class="tab-content">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="showAddExperienceRuleModal()">添加规则</button>
+                    <button class="btn btn-success" onclick="refreshExperienceRules()">刷新</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>规则名称</th>
+                                <th>触发条件</th>
+                                <th>经验奖励</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="experienceRulesTableBody">
+                            <tr>
+                                <td>每日签到</td>
+                                <td>完成签到</td>
+                                <td>+50</td>
+                                <td><span class="level-badge" style="background: rgba(16, 185, 129, 0.2);">启用</span></td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editExperienceRule('daily_checkin')">编辑</button>
+                                    <button class="btn btn-warning" onclick="toggleExperienceRule('daily_checkin')">禁用</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>连续签到奖励</td>
+                                <td>连续7天签到</td>
+                                <td>+200</td>
+                                <td><span class="level-badge" style="background: rgba(16, 185, 129, 0.2);">启用</span></td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editExperienceRule('streak_bonus')">编辑</button>
+                                    <button class="btn btn-warning" onclick="toggleExperienceRule('streak_bonus')">禁用</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 奖励配置 -->
+            <div id="rewards" class="tab-content">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="showAddRewardModal()">添加奖励</button>
+                    <button class="btn btn-success" onclick="refreshRewards()">刷新</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>奖励名称</th>
+                                <th>类型</th>
+                                <th>数量/金额</th>
+                                <th>触发条件</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rewardsTableBody">
+                            <tr>
+                                <td>签到奖励</td>
+                                <td>金币</td>
+                                <td>¥10</td>
+                                <td>每日签到</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editReward('daily_reward')">编辑</button>
+                                    <button class="btn btn-danger" onclick="deleteReward('daily_reward')">删除</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>升级奖励</td>
+                                <td>金币</td>
+                                <td>¥50</td>
+                                <td>等级提升</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editReward('level_up_reward')">编辑</button>
+                                    <button class="btn btn-danger" onclick="deleteReward('level_up_reward')">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 排行榜 -->
+            <div id="leaderboard" class="tab-content">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-success" onclick="refreshLeaderboard()">刷新排行榜</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>用户名</th>
+                                <th>等级</th>
+                                <th>经验值</th>
+                                <th>签到天数</th>
+                                <th>最后签到</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardTableBody">
+                            <tr>
+                                <td>🥇 1</td>
+                                <td>user456</td>
+                                <td><span class="level-badge" style="background: rgba(16, 185, 129, 0.2);">金丹期</span></td>
+                                <td>5,234</td>
+                                <td>78</td>
+                                <td>2024-01-15</td>
+                            </tr>
+                            <tr>
+                                <td>🥈 2</td>
+                                <td>user789</td>
+                                <td><span class="level-badge" style="background: rgba(245, 158, 11, 0.2);">筑基期</span></td>
+                                <td>3,456</td>
+                                <td>65</td>
+                                <td>2024-01-15</td>
+                            </tr>
+                            <tr>
+                                <td>🥉 3</td>
+                                <td>user123</td>
+                                <td><span class="level-badge" style="background: rgba(245, 158, 11, 0.2);">筑基期</span></td>
+                                <td>2,456</td>
+                                <td>45</td>
+                                <td>2024-01-14</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="importCodesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">导入兑换码</h3>
+                <button class="close-btn" onclick="closeModal('importCodesModal')">&times;</button>
+            </div>
+            <div style="position: relative; z-index: 1;">
+                <div class="form-group">
+                    <label for="codesInput">兑换码列表（每行一个）</label>
+                    <textarea id="codesInput" class="form-control" rows="10" placeholder="KYX2024001,50&#10;KYX2024002,100&#10;KYX2024003,25"></textarea>
+                </div>
+                <div style="text-align: right;">
+                    <button class="btn btn-secondary" onclick="closeModal('importCodesModal')">取消</button>
+                    <button class="btn btn-primary" onclick="importCodes()">导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟数据
+        let currentTab = 'dashboard';
+        
+        // 标签页切换
+        function showTab(tabName) {
+            // 隐藏所有标签页内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 移除所有标签页按钮的激活状态
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签页内容
+            document.getElementById(tabName).classList.add('active');
+            
+            // 激活选中的标签页按钮
+            event.target.classList.add('active');
+            
+            currentTab = tabName;
+        }
+
+        // 模态框控制
+        function showImportCodesModal() {
+            document.getElementById('importCodesModal').classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // 功能函数（模拟）
+        function refreshCodes() {
+            showAlert('兑换码列表已刷新', 'success');
+        }
+
+        function assignCode(code) {
+            showAlert(`兑换码 ${code} 分配成功`, 'success');
+        }
+
+        function deleteCode(code) {
+            if (confirm(`确定要删除兑换码 ${code} 吗？`)) {
+                showAlert(`兑换码 ${code} 已删除`, 'success');
+            }
+        }
+
+        function importCodes() {
+            const codesInput = document.getElementById('codesInput').value;
+            if (codesInput.trim()) {
+                showAlert('兑换码导入成功', 'success');
+                closeModal('importCodesModal');
+                document.getElementById('codesInput').value = '';
+            } else {
+                showAlert('请输入兑换码', 'error');
+            }
+        }
+
+        function refreshUsers() {
+            showAlert('用户列表已刷新', 'success');
+        }
+
+        function editUser(username) {
+            showAlert(`编辑用户 ${username}`, 'info');
+        }
+
+        function resetUserProgress(username) {
+            if (confirm(`确定要重置用户 ${username} 的进度吗？`)) {
+                showAlert(`用户 ${username} 进度已重置`, 'success');
+            }
+        }
+
+        function refreshLevels() {
+            showAlert('等级配置已刷新', 'success');
+        }
+
+        function editLevel(level) {
+            showAlert(`编辑等级 ${level}`, 'info');
+        }
+
+        function refreshExperienceRules() {
+            showAlert('经验规则已刷新', 'success');
+        }
+
+        function editExperienceRule(ruleId) {
+            showAlert(`编辑经验规则 ${ruleId}`, 'info');
+        }
+
+        function toggleExperienceRule(ruleId) {
+            showAlert(`经验规则 ${ruleId} 状态已切换`, 'success');
+        }
+
+        function refreshRewards() {
+            showAlert('奖励配置已刷新', 'success');
+        }
+
+        function editReward(rewardId) {
+            showAlert(`编辑奖励 ${rewardId}`, 'info');
+        }
+
+        function deleteReward(rewardId) {
+            if (confirm(`确定要删除奖励 ${rewardId} 吗？`)) {
+                showAlert(`奖励 ${rewardId} 已删除`, 'success');
+            }
+        }
+
+        function refreshLeaderboard() {
+            showAlert('排行榜已刷新', 'success');
+        }
+
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                showAlert('已退出登录', 'info');
+                // 这里可以添加实际的登出逻辑
+            }
+        }
+
+        // 通知系统
+        function showAlert(message, type = 'info') {
+            // 创建通知元素
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alert.style.position = 'fixed';
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.style.minWidth = '300px';
+            alert.style.transform = 'translateX(100%)';
+            alert.style.transition = 'transform 0.3s ease';
+
+            document.body.appendChild(alert);
+
+            // 显示动画
+            setTimeout(() => {
+                alert.style.transform = 'translateX(0)';
+            }, 100);
+
+            // 自动隐藏
+            setTimeout(() => {
+                alert.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(alert);
+                }, 300);
+            }, 3000);
+        }
+
+        // 点击模态框背景关闭
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+            }
+        });
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            showAlert('超级管理后台加载完成', 'success');
+        });
+    </script>
+</body>
+
+</html>
+
+
+
+
+
+
+

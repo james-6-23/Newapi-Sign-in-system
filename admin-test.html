@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员功能测试 - KYX 签到系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .test-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .test-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #4285f4;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .test-item {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .test-item h3 {
+            color: #10b981;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-success { background: #10b981; }
+        .btn-warning { background: #f59e0b; }
+        .btn-danger { background: #ef4444; }
+        .result {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: monospace;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .error { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .input {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0.25rem;
+            width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 管理员功能测试</h1>
+            <p>测试 workers-admin.js 的各项功能</p>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">📊 统计数据测试</h2>
+            <div class="test-item">
+                <h3>获取系统统计</h3>
+                <button class="btn" onclick="testStats()">测试统计API</button>
+                <div id="statsResult" class="result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🎫 兑换码管理测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>获取兑换码列表</h3>
+                    <button class="btn" onclick="testGetCodes()">获取列表</button>
+                    <div id="codesResult" class="result"></div>
+                </div>
+                <div class="test-item">
+                    <h3>生成兑换码</h3>
+                    <input type="number" id="generateCount" class="input" placeholder="数量" value="5">
+                    <input type="number" id="generateAmount" class="input" placeholder="金额" value="10.00" step="0.01">
+                    <br>
+                    <button class="btn btn-success" onclick="testGenerateCodes()">生成兑换码</button>
+                    <div id="generateResult" class="result"></div>
+                </div>
+                <div class="test-item">
+                    <h3>搜索兑换码</h3>
+                    <input type="text" id="searchQuery" class="input" placeholder="搜索关键词">
+                    <br>
+                    <button class="btn btn-warning" onclick="testSearchCodes()">搜索</button>
+                    <div id="searchResult" class="result"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">👥 用户管理测试</h2>
+            <div class="test-grid">
+                <div class="test-item">
+                    <h3>获取用户列表</h3>
+                    <button class="btn" onclick="testGetUsers()">获取用户</button>
+                    <div id="usersResult" class="result"></div>
+                </div>
+                <div class="test-item">
+                    <h3>用户详情</h3>
+                    <input type="number" id="userDetailId" class="input" placeholder="用户ID" value="1">
+                    <br>
+                    <button class="btn btn-warning" onclick="testUserDetails()">获取详情</button>
+                    <div id="userDetailResult" class="result"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">📅 签到记录测试</h2>
+            <div class="test-item">
+                <h3>获取签到记录</h3>
+                <button class="btn" onclick="testGetCheckins()">获取记录</button>
+                <div id="checkinsResult" class="result"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2 class="test-title">🔐 认证测试</h2>
+            <div class="test-item">
+                <h3>管理员登录</h3>
+                <input type="text" id="loginUsername" class="input" placeholder="用户名" value="admin">
+                <input type="password" id="loginPassword" class="input" placeholder="密码" value="admin123">
+                <br>
+                <button class="btn btn-success" onclick="testAdminLogin()">登录</button>
+                <button class="btn btn-danger" onclick="testAdminLogout()">登出</button>
+                <div id="authResult" class="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/admin';
+        
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function apiRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json', ...options.headers },
+                    ...options
+                });
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testStats() {
+            const result = await apiRequest(`${API_BASE}/stats`);
+            showResult('statsResult', result, !result.success);
+        }
+
+        async function testGetCodes() {
+            const result = await apiRequest(`${API_BASE}/codes?page=1&limit=10`);
+            showResult('codesResult', result, !result.success);
+        }
+
+        async function testGenerateCodes() {
+            const count = document.getElementById('generateCount').value;
+            const amount = document.getElementById('generateAmount').value;
+            
+            const result = await apiRequest(`${API_BASE}/codes/generate`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    count: parseInt(count),
+                    amount: parseFloat(amount),
+                    adminId: 1
+                })
+            });
+            showResult('generateResult', result, !result.success);
+        }
+
+        async function testSearchCodes() {
+            const query = document.getElementById('searchQuery').value;
+            const result = await apiRequest(`${API_BASE}/codes/search?q=${encodeURIComponent(query)}`);
+            showResult('searchResult', result, !result.success);
+        }
+
+        async function testGetUsers() {
+            const result = await apiRequest(`${API_BASE}/users?page=1&limit=10`);
+            showResult('usersResult', result, !result.success);
+        }
+
+        async function testUserDetails() {
+            const userId = document.getElementById('userDetailId').value;
+            const result = await apiRequest(`${API_BASE}/users/${userId}`);
+            showResult('userDetailResult', result, !result.success);
+        }
+
+        async function testGetCheckins() {
+            const result = await apiRequest(`${API_BASE}/checkins?page=1&limit=10`);
+            showResult('checkinsResult', result, !result.success);
+        }
+
+        async function testAdminLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            const result = await apiRequest(`${API_BASE}/login`, {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+            showResult('authResult', result, !result.success);
+        }
+
+        async function testAdminLogout() {
+            const result = await apiRequest(`${API_BASE}/logout`, {
+                method: 'POST'
+            });
+            showResult('authResult', result, !result.success);
+        }
+
+        // 页面加载时自动测试统计数据
+        window.addEventListener('load', () => {
+            testStats();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# KYX 签到系统 - 管理端配置（简化版）
+# 不需要任何环境变量
+
+name = "kyx-admin"
+main = "workers-admin.js"
+compatibility_date = "2024-01-01"
+
+# D1 数据库配置
+[[d1_databases]]
+binding = "DB"
+database_name = "kyx-checkin-system"
+database_id = "your-database-id-here"  # 替换为你的实际数据库ID
+
+# 管理端不需要环境变量
+# 所有配置都在代码中硬编码
+
+# 部署配置
+[build]
+command = ""
+
+# 路由配置（如果使用自定义域名）
+# [[routes]]
+# pattern = "admin.yourdomain.com/*"
+# zone_name = "yourdomain.com"

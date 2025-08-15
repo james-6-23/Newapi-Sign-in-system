@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员API调试</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0f0f0f;
+            color: #fff;
+            padding: 2rem;
+        }
+        .test-section {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0.25rem;
+        }
+        .result {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 1rem;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { border-color: #10b981; }
+        .error { border-color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>🔧 管理员API调试工具</h1>
+    
+    <div class="test-section">
+        <h3>认证测试</h3>
+        <button class="btn" onclick="testLogin()">测试登录</button>
+        <button class="btn" onclick="testSession()">测试会话</button>
+        <div id="authResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>统计API测试</h3>
+        <button class="btn" onclick="testStats()">获取统计</button>
+        <div id="statsResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>兑换码API测试</h3>
+        <button class="btn" onclick="testCodes()">获取兑换码</button>
+        <button class="btn" onclick="testCodesRaw()">原始查询</button>
+        <div id="codesResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>用户API测试</h3>
+        <button class="btn" onclick="testUsers()">获取用户</button>
+        <button class="btn" onclick="testUsersRaw()">原始查询</button>
+        <div id="usersResult" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>签到API测试</h3>
+        <button class="btn" onclick="testCheckins()">获取签到</button>
+        <div id="checkinsResult" class="result"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function apiRequest(url, options = {}) {
+            try {
+                console.log('🔄 API Request:', url, options);
+                const response = await fetch(url, {
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json', ...options.headers },
+                    ...options
+                });
+                
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', [...response.headers.entries()]);
+                
+                const text = await response.text();
+                console.log('📄 Response text:', text);
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { error: 'Invalid JSON', text: text };
+                }
+                
+                return {
+                    success: response.ok,
+                    status: response.status,
+                    data: data,
+                    headers: [...response.headers.entries()]
+                };
+            } catch (error) {
+                console.error('❌ Request failed:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+
+        async function testLogin() {
+            const result = await apiRequest('/api/admin/login', {
+                method: 'POST',
+                body: JSON.stringify({
+                    username: 'admin',
+                    password: 'admin123'
+                })
+            });
+            showResult('authResult', result, !result.success);
+        }
+
+        async function testSession() {
+            const result = await apiRequest('/api/admin/stats');
+            showResult('authResult', result, !result.success);
+        }
+
+        async function testStats() {
+            const result = await apiRequest('/api/admin/stats');
+            showResult('statsResult', result, !result.success);
+        }
+
+        async function testCodes() {
+            const result = await apiRequest('/api/admin/codes?page=1&limit=10');
+            showResult('codesResult', result, !result.success);
+        }
+
+        async function testCodesRaw() {
+            // 直接测试数据库查询
+            const result = await apiRequest('/api/admin/codes?debug=true');
+            showResult('codesResult', result, !result.success);
+        }
+
+        async function testUsers() {
+            const result = await apiRequest('/api/admin/users?page=1&limit=10');
+            showResult('usersResult', result, !result.success);
+        }
+
+        async function testUsersRaw() {
+            const result = await apiRequest('/api/admin/users?debug=true');
+            showResult('usersResult', result, !result.success);
+        }
+
+        async function testCheckins() {
+            const result = await apiRequest('/api/admin/checkins?page=1&limit=10');
+            showResult('checkinsResult', result, !result.success);
+        }
+
+        // 页面加载时自动测试
+        window.addEventListener('load', () => {
+            console.log('🚀 调试页面已加载');
+        });
+    </script>
+</body>
+</html>

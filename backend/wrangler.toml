@@ -1,0 +1,19 @@
+name = "checkin-system-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "checkin-system"
+database_id = "your-database-id-here"
+
+[vars]
+FRONTEND_URL = "https://your-domain.pages.dev"
+AUTH_URL = "https://connect.linux.do/oauth2/authorize"
+TOKEN_URL = "https://connect.linux.do/oauth2/token"
+USER_INFO_URL = "https://connect.linux.do/oauth2/userinfo"
+
+# 敏感信息使用 secrets
+# 运行以下命令设置密钥:
+# wrangler secret put CLIENT_ID
+# wrangler secret put CLIENT_SECRET

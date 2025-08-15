@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>优化测试页面 - KYX 签到系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            border: 1px solid var(--color-border-primary);
+        }
+
+        .test-title {
+            font-size: var(--text-xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--spacing-md);
+            color: var(--color-accent);
+        }
+
+        .test-description {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-lg);
+            line-height: 1.6;
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: var(--spacing-xs);
+        }
+
+        .status-success {
+            background: var(--color-success);
+        }
+
+        .status-warning {
+            background: var(--color-warning);
+        }
+
+        .status-error {
+            background: var(--color-error);
+        }
+
+        .mock-codes-list {
+            display: grid;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+
+        .mock-code-item {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mock-code-item[data-type="gift"] {
+            border-left: 4px solid var(--color-warning);
+            background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%);
+        }
+
+        .mock-code-item[data-type="checkin"] {
+            border-left: 4px solid var(--color-accent);
+        }
+
+        /* 兑换码信息容器 */
+        .code-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 兑换码文本样式 */
+        .code-text {
+            font-family: var(--font-mono);
+            font-size: 1.125rem;
+            font-weight: 400;
+            background: rgba(139, 184, 232, 0.1);
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            letter-spacing: 0.05em;
+            color: oklch(0.707 0.022 261.325);
+            border: 1px solid rgba(139, 184, 232, 0.2);
+            font-feature-settings: "liga" 0, "calt" 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 420px;
+            flex-shrink: 0;
+        }
+
+        /* 时间显示样式 */
+        .code-date {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #9ca3af;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 金额显示样式 */
+        .code-amount {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 400;
+            color: #4ade80;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            white-space: nowrap;
+            width: 60px;
+            flex-shrink: 0;
+        }
+
+        /* 优化后的赠送弹窗样式 */
+        .gift-modal {
+            max-width: 580px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gift-modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            background-size: 300% 100%;
+            animation: rainbow 3s ease infinite;
+        }
+
+        @keyframes rainbow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .gift-modal-header {
+            text-align: center;
+            padding: 2rem 2rem 1rem;
+            position: relative;
+        }
+
+        .gift-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .gift-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #feca57, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gift-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .gift-modal-body {
+            padding: 1rem 2rem 2rem;
+        }
+
+        .gift-amount {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(254, 202, 87, 0.1), rgba(255, 159, 243, 0.1));
+            border-radius: 1rem;
+            border: 1px solid rgba(254, 202, 87, 0.2);
+        }
+
+        .currency {
+            font-size: 1.5rem;
+            color: #feca57;
+            font-weight: 600;
+        }
+
+        .amount {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #fff;
+            margin-left: 0.25rem;
+            text-shadow: 0 0 20px rgba(254, 202, 87, 0.5);
+        }
+
+        .gift-code-container {
+            margin-top: 1.5rem;
+        }
+
+        .code-label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .code-input-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: stretch;
+        }
+
+        .gift-code-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: rgba(139, 184, 232, 0.1);
+            border: 1px solid rgba(139, 184, 232, 0.2);
+            border-radius: 0.375rem;
+            color: oklch(0.707 0.022 261.325);
+            font-family: var(--font-mono);
+            font-size: 1.125rem;
+            font-weight: 400;
+            text-align: center;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gift-code-input:focus {
+            outline: none;
+            border-color: #feca57;
+            box-shadow: 0 0 0 3px rgba(254, 202, 87, 0.2);
+        }
+
+        .copy-code-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, #feca57, #ff9ff3);
+            border: none;
+            border-radius: 0.75rem;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .copy-code-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(254, 202, 87, 0.4);
+        }
+
+        .copy-code-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 深色主题复制按钮样式（黑色背景+白色文字） */
+        .copy-btn-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #000000;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 80px;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .copy-btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            background: #1a1a1a;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .copy-btn-modern:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn-modern.copied {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: #fff;
+        }
+
+        .copy-btn-modern.copied svg {
+            animation: checkmark 0.3s ease;
+        }
+
+        @keyframes checkmark {
+            0% {
+                transform: scale(0.8);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .gift-modal-footer {
+            padding: 1rem 2rem 2rem;
+            text-align: center;
+        }
+
+        .btn-close-gift {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 2rem;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-close-gift:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .test-container {
+                margin: 20px auto;
+                padding: 10px;
+            }
+
+            .test-section {
+                padding: var(--spacing-lg);
+            }
+
+            .test-buttons {
+                flex-direction: column;
+            }
+
+            /* 移动端赠送弹窗优化 */
+            .gift-modal {
+                max-width: 90vw;
+                margin: 1rem;
+            }
+
+            .gift-modal-header {
+                padding: 1.5rem 1.5rem 1rem;
+            }
+
+            .gift-icon {
+                font-size: 3rem;
+            }
+
+            .gift-title {
+                font-size: 1.5rem;
+            }
+
+            .gift-modal-body {
+                padding: 1rem 1.5rem 1.5rem;
+            }
+
+            .gift-amount {
+                padding: 1rem;
+            }
+
+            .amount {
+                font-size: 2.5rem;
+            }
+
+            .code-input-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .copy-code-btn {
+                justify-content: center;
+            }
+
+            .gift-modal-footer {
+                padding: 1rem 1.5rem 1.5rem;
+            }
+
+            /* 移动端复制按钮优化 */
+            .copy-btn-modern {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+                min-width: 70px;
+            }
+
+            .copy-btn-modern svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            /* 移动端布局优化 */
+            .mock-code-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .code-info {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+            /* 移动端字体优化 */
+            .code-text {
+                font-size: 1rem;
+                padding: 0.25rem 0.5rem;
+                letter-spacing: 0.03em;
+                width: 100%;
+            }
+
+            .code-amount {
+                font-size: 0.9rem;
+                width: auto;
+            }
+
+            .code-date {
+                font-size: 0.8rem;
+                flex: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-container">
+        <h1 style="text-align: center; margin-bottom: 2rem;">KYX 签到系统 - 优化测试</h1>
+
+        <!-- 测试1: 查看全部按钮优化 -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="status-indicator status-success"></span>
+                测试1: 查看全部按钮优化
+            </h2>
+            <p class="test-description">
+                优化前：点击"查看全部"会跳转到新页面（codes.html）<br>
+                优化后：在当前页面展开显示更多兑换码，避免页面刷新
+            </p>
+            <div class="test-buttons">
+                <button class="btn btn-primary" id="testViewAllBtn">测试查看全部</button>
+                <button class="btn btn-secondary" id="resetViewBtn">重置视图</button>
+            </div>
+            <div class="mock-codes-list" id="mockCodesList">
+                <!-- 模拟兑换码列表 -->
+            </div>
+        </div>
+
+        <!-- 测试2: 通知防重复机制 -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="status-indicator status-success"></span>
+                测试2: 通知防重复机制
+            </h2>
+            <p class="test-description">
+                优化前：每次页面加载都可能重复显示赠送通知<br>
+                优化后：使用processedNotifications Set防止重复显示
+            </p>
+            <div class="test-buttons">
+                <button class="btn btn-primary" id="testGiftNotification">模拟赠送通知</button>
+                <button class="btn btn-secondary" id="testDuplicateNotification">测试重复通知</button>
+                <button class="btn btn-ghost" id="clearNotifications">清除通知记录</button>
+            </div>
+        </div>
+
+        <!-- 测试3: 兑换码类型标识 -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="status-indicator status-success"></span>
+                测试3: 兑换码类型标识
+            </h2>
+            <p class="test-description">
+                优化后：兑换码列表中区分显示签到获得和系统赠送的兑换码，使用不同的图标和颜色
+            </p>
+            <div class="test-buttons">
+                <button class="btn btn-primary" id="showMockCodes">显示示例兑换码</button>
+            </div>
+            <div class="mock-codes-list" id="mockTypeCodes">
+                <!-- 示例兑换码 -->
+            </div>
+        </div>
+
+        <!-- 测试4: 加载状态优化 -->
+        <div class="test-section">
+            <h2 class="test-title">
+                <span class="status-indicator status-success"></span>
+                测试4: 加载状态优化
+            </h2>
+            <p class="test-description">
+                优化后：在切换视图时显示骨架屏加载状态，提升用户体验
+            </p>
+            <div class="test-buttons">
+                <button class="btn btn-primary" id="testLoadingState">测试加载状态</button>
+            </div>
+            <div class="mock-codes-list" id="loadingTestArea">
+                <!-- 加载测试区域 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 优化后的赠送弹窗 -->
+    <div class="modal" id="testGiftModal">
+        <div class="modal-backdrop" onclick="closeTestGiftModal()"></div>
+        <div class="modal-content gift-modal">
+            <div class="gift-modal-header">
+                <div class="gift-icon">🎁</div>
+                <h3 class="gift-title">系统赠送</h3>
+                <p class="gift-subtitle">恭喜您获得兑换码奖励！</p>
+                <button class="modal-close" onclick="closeTestGiftModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+            <div class="gift-modal-body">
+                <div class="gift-amount">
+                    <span class="currency">$</span>
+                    <span class="amount">10</span>
+                </div>
+                <div class="gift-code-container">
+                    <label class="code-label">您的兑换码</label>
+                    <div class="code-input-group">
+                        <input type="text" id="testGiftCodeInput" readonly value="aec973db8988433e8401c7c5d48e2188"
+                            class="gift-code-input">
+                        <button class="copy-code-btn" onclick="copyTestGiftCode()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor"
+                                    stroke-width="2" />
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                            <span>复制</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="gift-modal-footer">
+                <button class="btn-close-gift" onclick="closeTestGiftModal()">
+                    <span>我知道了</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12h14m-7-7l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        // 模拟应用状态
+        const TestState = {
+            showingAll: false,
+            processedNotifications: new Set(),
+            mockCodes: [
+                { redemption_code: 'aec973db8988433e8401c7c5d48e2188', amount: 5, distribution_type: 'checkin', check_in_date: '2024-12-13T10:30:45.123Z' },
+                { redemption_code: 'b7f4e9c2a1d6f8e3c9b2a5d8f1e4c7b0', amount: 5, distribution_type: 'checkin', check_in_date: '2024-12-12T09:15:32.456Z' },
+                { redemption_code: 'c8e5f0d3b2e7f9e4d0c3b6e9f2e5d8c1', amount: 10, distribution_type: 'gift', created_at: '2024-12-11T14:22:18.789Z' },
+                { redemption_code: 'd9f6e1e4c3f8e0f5e1d4c7f0e3f6e9d2', amount: 5, distribution_type: 'checkin', check_in_date: '2024-12-10T16:45:07.012Z' },
+                { redemption_code: 'e0e7f2f5d4e9f1e6f2e5d8e1f4e7f0e3', amount: 20, distribution_type: 'gift', created_at: '2024-12-09T11:33:29.345Z' }
+            ]
+        };
+
+        // 初始化测试页面
+        function initTestPage() {
+            bindTestEvents();
+            showInitialCodes();
+        }
+
+        // 绑定测试事件
+        function bindTestEvents() {
+            // 测试查看全部按钮
+            document.getElementById('testViewAllBtn').addEventListener('click', testToggleView);
+            document.getElementById('resetViewBtn').addEventListener('click', resetView);
+
+            // 测试通知
+            document.getElementById('testGiftNotification').addEventListener('click', testGiftNotification);
+            document.getElementById('testDuplicateNotification').addEventListener('click', testDuplicateNotification);
+            document.getElementById('clearNotifications').addEventListener('click', clearNotifications);
+
+            // 测试兑换码类型
+            document.getElementById('showMockCodes').addEventListener('click', showMockCodes);
+
+            // 测试加载状态
+            document.getElementById('testLoadingState').addEventListener('click', testLoadingState);
+        }
+
+        // 显示初始兑换码
+        function showInitialCodes() {
+            const codesList = document.getElementById('mockCodesList');
+            const initialCodes = TestState.mockCodes.slice(0, 2);
+            codesList.innerHTML = renderCodes(initialCodes);
+        }
+
+        // 渲染兑换码
+        function renderCodes(codes) {
+            return codes.map(code => {
+                const sourceIcon = code.distribution_type === 'gift' ? '🎁' : '📅';
+                const sourceText = code.distribution_type === 'gift' ? '系统赠送' : '签到获得';
+
+                // 格式化时间，精确到毫秒
+                const timestamp = new Date(code.check_in_date || code.created_at);
+                const formattedTime = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')} ${String(timestamp.getHours()).padStart(2, '0')}:${String(timestamp.getMinutes()).padStart(2, '0')}:${String(timestamp.getSeconds()).padStart(2, '0')}.${String(timestamp.getMilliseconds()).padStart(3, '0')}`;
+
+                return `
+                    <div class="mock-code-item" data-type="${code.distribution_type}">
+                        <div class="code-info">
+                            <span class="code-text">${code.redemption_code}</span>
+                            <span class="code-amount">$${code.amount}</span>
+                            <span class="code-date">
+                                ${sourceIcon} ${sourceText} - ${formattedTime}
+                            </span>
+                        </div>
+                        <button class="copy-btn-modern" onclick="copyTestCode('${code.redemption_code}', this)" title="复制兑换码">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                            </svg>
+                            <span>复制</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 测试切换视图
+        function testToggleView() {
+            const btn = document.getElementById('testViewAllBtn');
+            const codesList = document.getElementById('mockCodesList');
+
+            if (!TestState.showingAll) {
+                TestState.showingAll = true;
+                btn.textContent = '收起';
+                btn.classList.add('active');
+                codesList.innerHTML = renderCodes(TestState.mockCodes);
+                utils.showToast('已展开显示全部兑换码', 'success');
+            } else {
+                TestState.showingAll = false;
+                btn.textContent = '查看全部';
+                btn.classList.remove('active');
+                codesList.innerHTML = renderCodes(TestState.mockCodes.slice(0, 2));
+                utils.showToast('已收起兑换码列表', 'info');
+            }
+        }
+
+        // 重置视图
+        function resetView() {
+            TestState.showingAll = false;
+            const btn = document.getElementById('testViewAllBtn');
+            btn.textContent = '查看全部';
+            btn.classList.remove('active');
+            showInitialCodes();
+            utils.showToast('视图已重置', 'info');
+        }
+
+        // 测试赠送通知
+        function testGiftNotification() {
+            const notificationId = Date.now();
+
+            if (!TestState.processedNotifications.has(notificationId)) {
+                TestState.processedNotifications.add(notificationId);
+                document.getElementById('testGiftModal').classList.add('active');
+                utils.showToast('显示赠送通知（首次）', 'success');
+            } else {
+                utils.showToast('通知已处理，不会重复显示', 'warning');
+            }
+        }
+
+        // 测试重复通知
+        function testDuplicateNotification() {
+            utils.showToast('尝试重复显示通知...', 'info');
+            setTimeout(() => {
+                testGiftNotification();
+            }, 1000);
+        }
+
+        // 清除通知记录
+        function clearNotifications() {
+            TestState.processedNotifications.clear();
+            utils.showToast('通知记录已清除', 'success');
+        }
+
+        // 显示示例兑换码
+        function showMockCodes() {
+            const container = document.getElementById('mockTypeCodes');
+            container.innerHTML = renderCodes(TestState.mockCodes);
+            utils.showToast('已显示不同类型的兑换码示例', 'success');
+        }
+
+        // 测试加载状态
+        function testLoadingState() {
+            const container = document.getElementById('loadingTestArea');
+
+            // 显示加载状态
+            container.innerHTML = `
+                <div class="loading-state">
+                    <div class="skeleton-loader" style="height: 60px; margin-bottom: 10px; border-radius: 8px;"></div>
+                    <div class="skeleton-loader" style="height: 60px; margin-bottom: 10px; border-radius: 8px;"></div>
+                    <div class="skeleton-loader" style="height: 60px; border-radius: 8px;"></div>
+                </div>
+            `;
+
+            utils.showToast('显示加载状态...', 'info');
+
+            // 2秒后显示内容
+            setTimeout(() => {
+                container.innerHTML = renderCodes(TestState.mockCodes.slice(0, 3));
+                utils.showToast('加载完成！', 'success');
+            }, 2000);
+        }
+
+        // 关闭测试赠送弹窗
+        function closeTestGiftModal() {
+            document.getElementById('testGiftModal').classList.remove('active');
+        }
+
+        // 复制测试兑换码
+        function copyTestGiftCode() {
+            const code = document.getElementById('testGiftCodeInput').value;
+            navigator.clipboard.writeText(code).then(() => {
+                utils.showToast('测试兑换码已复制', 'success');
+            });
+        }
+
+        // 复制测试兑换码（用于列表中的按钮）
+        async function copyTestCode(code, button) {
+            try {
+                await navigator.clipboard.writeText(code);
+
+                // 保存原始内容
+                const originalHTML = button.innerHTML;
+
+                button.classList.add('copied');
+
+                // 检查是否是现代化按钮
+                if (button.classList.contains('copy-btn-modern')) {
+                    button.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20,6 9,17 4,12"></polyline>
+                        </svg>
+                        <span>已复制</span>
+                    `;
+                } else {
+                    button.innerHTML = '<span>✓</span>';
+                }
+
+                setTimeout(() => {
+                    button.innerHTML = originalHTML;
+                    button.classList.remove('copied');
+                }, 2000);
+
+                utils.showToast('测试兑换码已复制', 'success');
+            } catch (error) {
+                utils.showToast('复制失败，请手动复制', 'error');
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initTestPage);
+    </script>
+</body>
+
+</html>

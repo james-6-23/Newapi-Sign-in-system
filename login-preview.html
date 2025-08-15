@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录界面预览 - KYX 公益 签到系统</title>
+    <style>
+        :root {
+            --color-bg: #0f0f0f;
+            --color-surface: #1a1a1a;
+            --color-text: #ffffff;
+            --color-text-secondary: #cccccc;
+            --color-accent: #4285f4;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --border-radius: var(--radius-md);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            /* 允许页面在内容较多时滚动，不再被大黑色容器限制 */
+            overflow-x: auto;
+            overflow-y: auto;
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(66, 133, 244, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(52, 168, 83, 0.1) 0%, transparent 50%);
+            z-index: 1;
+        }
+
+        .grid-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            /* 赛博网格：可动画的重复线条 */
+            background-image:
+                repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 50px),
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 50px);
+            background-size: 50px 50px;
+            animation: gridMove 30s linear infinite;
+            z-index: 1;
+        }
+
+        @keyframes gridMove {
+            0% {
+                background-position: 0 0, 0 0;
+                filter: hue-rotate(0deg);
+            }
+
+            100% {
+                background-position: 200px 200px, 200px 200px;
+                filter: hue-rotate(15deg);
+            }
+        }
+
+        /* 轻微噪点纹理覆盖 */
+        .noise-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.07;
+            mix-blend-mode: soft-light;
+            background-size: cover;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.8'/></svg>");
+        }
+
+        /* 细密扫描线 */
+        .scanlines {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 3px);
+            opacity: 0.1;
+            mix-blend-mode: soft-light;
+        }
+
+        /* 扫描条动画已移除 */
+
+        .login-card {
+            /* 全屏毛玻璃容器 */
+            background: rgba(255, 255, 255, 0.08);
+            -webkit-backdrop-filter: blur(28px) saturate(150%);
+            backdrop-filter: blur(28px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 0;
+            padding: calc(var(--spacing-xl) * 1.2);
+            width: 100vw;
+            height: 100vh;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            overflow: hidden;
+        }
+
+        /* 玻璃高光效果 */
+        .login-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: radial-gradient(120% 120% at 0% 0%, rgba(255, 255, 255, 0.28) 0%, transparent 40%),
+                radial-gradient(120% 120% at 100% 100%, rgba(255, 255, 255, 0.08) 0%, transparent 45%);
+        }
+
+        .logo-container {
+            margin-bottom: calc(var(--spacing-xl) * 1.5);
+        }
+
+        .logo-icon {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .logo-image {
+            width: 140px;
+            height: 140px;
+            border-radius: 24px;
+            object-fit: cover;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        .logo-text-en {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: var(--spacing-sm);
+            background: linear-gradient(135deg, #eaf2ff, #dfe7ff 40%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            /* 科技感：增加字距、全大写、描边与霓虹发光 */
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.18);
+            text-shadow:
+                0 0 2px rgba(255, 255, 255, 0.7),
+                0 0 12px rgba(66, 133, 244, 0.35),
+                0 0 28px rgba(66, 133, 244, 0.25);
+            filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.35));
+            animation: pulse 2s ease-in-out infinite, glowPulse 4s ease-in-out infinite;
+            white-space: nowrap;
+            line-height: 1.2;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            }
+
+            50% {
+                transform: scale(1.08);
+                opacity: 0.85;
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4);
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        /* 霓虹发光轻微脉冲，叠加在基础 pulse 之上 */
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                text-shadow:
+                    0 0 2px rgba(255, 255, 255, 0.7),
+                    0 0 12px rgba(66, 133, 244, 0.35),
+                    0 0 28px rgba(66, 133, 244, 0.25);
+            }
+
+            50% {
+                text-shadow:
+                    0 0 3px rgba(255, 255, 255, 0.8),
+                    0 0 16px rgba(66, 133, 244, 0.5),
+                    0 0 36px rgba(66, 133, 244, 0.35);
+            }
+        }
+
+        .logo-subtitle-zh {
+            color: var(--color-text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: calc(var(--spacing-xl) * 1.2);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            animation: fadeInUp 1s ease-out 0.5s both;
+            line-height: 1.4;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            width: min(480px, 90vw);
+        }
+
+        .btn {
+            /* 纯边框玻璃按钮 */
+            background: transparent;
+            color: #ffffff;
+            border: 1.5px solid rgba(255, 255, 255, 0.35);
+            padding: calc(var(--spacing-md) * 1.8) calc(var(--spacing-lg) * 2);
+            border-radius: var(--radius-md);
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            margin: var(--spacing-lg) 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            min-height: 60px;
+            /* 防止按钮文字换行 */
+            white-space: nowrap;
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+            overflow: hidden;
+        }
+
+        /* 悬停光带滑动 */
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: -10%;
+            bottom: -10%;
+            left: -50%;
+            width: 40%;
+            background: linear-gradient(120deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.25) 45%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0.25) 55%, rgba(255, 255, 255, 0) 100%);
+            transform: translateX(-200%) skewX(-20deg);
+            transition: transform 0.7s ease;
+            pointer-events: none;
+        }
+
+        .btn:hover::before {
+            transform: translateX(350%) skewX(-20deg);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            background: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.55);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 当用户开启减少动效时，禁用大幅动画，提升可访问性与稳定性 */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+
+
+        .preview-note {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            z-index: 30;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .login-card {
+                width: 100vw;
+                height: 100vh;
+                padding: var(--spacing-lg);
+                margin: 0;
+                border-radius: 0;
+            }
+
+            .logo-image {
+                width: 120px;
+                height: 120px;
+                border-radius: 20px;
+            }
+
+            .logo-text-en {
+                font-size: 2.6rem;
+                letter-spacing: 0.06em;
+            }
+
+            .logo-subtitle-zh {
+                font-size: 1rem;
+            }
+
+            .btn {
+                font-size: 1.1rem;
+                padding: calc(var(--spacing-md) * 1.5) calc(var(--spacing-lg) * 1.5);
+                min-height: 55px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                width: 100vw;
+                height: 100vh;
+                padding: var(--spacing-md);
+                border-radius: 0;
+            }
+
+            .logo-image {
+                width: 104px;
+                height: 104px;
+                border-radius: 18px;
+            }
+
+            .logo-text-en {
+                font-size: 2.2rem;
+                letter-spacing: 0.05em;
+            }
+
+            .logo-subtitle-zh {
+                font-size: 0.95rem;
+            }
+
+            .btn {
+                font-size: 1rem;
+                padding: var(--spacing-md) var(--spacing-lg);
+                min-height: 50px;
+            }
+
+
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration"></div>
+    <div class="grid-bg"></div>
+    <div class="noise-overlay"></div>
+    <div class="scanlines"></div>
+
+
+
+    <!-- 登录卡片（全屏毛玻璃） -->
+    <div class="login-card">
+        <div class="logo-container">
+            <div class="logo-icon">
+                <img class="logo-image"
+                    src="https://lh3.googleusercontent.com/a/ACg8ocJmyq3J-RuNfGv7J430fFiZ6EYQ0AB_phVlIPwm265e9HC1vJc=s288-c-no"
+                    alt="KYX Logo" />
+            </div>
+            <h1 class="logo-text-en">KYX Check-in System</h1>
+            <p class="logo-subtitle-zh">公益签到系统 · 每日签到 · 领取兑换码</p>
+        </div>
+
+        <form class="login-form">
+            <button type="button" class="btn">
+                <span class="loading-spinner"></span>
+                <span>使用 Linux Do 账号登录</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="preview-note">
+        🎨 登录界面预览 - 按钮已放大1.5倍，标题添加脉冲效果
+    </div>
+
+    <script>
+        // 简单的交互效果
+        document.querySelector('.btn').addEventListener('click', function () {
+            const spinner = this.querySelector('.loading-spinner');
+            const text = this.querySelector('span:last-child');
+
+            spinner.style.display = 'inline-block';
+            text.textContent = '登录中...';
+            this.disabled = true;
+
+            setTimeout(() => {
+                spinner.style.display = 'none';
+                text.textContent = '使用 Linux Do 账号登录';
+                this.disabled = false;
+            }, 2000);
+        });
+    </script>
+</body>
+
+</html>

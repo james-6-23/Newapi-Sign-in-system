@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYX 签到系统</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        /* 页面布局 */
+        .app-container {
+            min-height: 100vh;
+            background: var(--color-bg-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            background: var(--color-bg-elevated);
+            border-bottom: 1px solid var(--color-border-primary);
+            position: sticky;
+            top: 0;
+            z-index: var(--z-sticky);
+            backdrop-filter: blur(10px);
+            background: rgba(15, 15, 15, 0.95);
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-md) var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: var(--text-xl);
+            font-weight: var(--font-bold);
+            color: var(--color-text-primary);
+        }
+
+        .navbar-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-lg);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-full);
+            background: var(--color-bg-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .user-menu:hover {
+            background: var(--color-bg-tertiary);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-full);
+            background: var(--color-bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+            color: var(--color-text-primary);
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: var(--color-bg-secondary);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+        }
+
+        .theme-toggle:hover {
+            background: var(--color-bg-tertiary);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: var(--spacing-2xl) var(--spacing-lg);
+        }
+
+        /* 签到卡片 */
+        .checkin-card {
+            background: var(--color-bg-elevated);
+            border-radius: var(--radius-2xl);
+            padding: var(--spacing-2xl);
+            margin-bottom: var(--spacing-2xl);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--color-border-primary);
+        }
+
+        .checkin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6);
+            animation: gradient 3s ease infinite;
+            background-size: 200% 100%;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .checkin-title {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .checkin-subtitle {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .checkin-btn {
+            padding: var(--spacing-lg) var(--spacing-3xl);
+            font-size: var(--text-lg);
+            background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-hover) 100%);
+            color: var(--color-text-inverse);
+            border: none;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkin-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+        }
+
+        .checkin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .checkin-btn.checked {
+            background: var(--color-success);
+        }
+
+        /* 统计网格 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .stat-card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            transition: all var(--transition-base);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-md);
+            font-size: var(--text-xl);
+        }
+
+        .stat-value {
+            font-size: var(--text-3xl);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .stat-label {
+            color: var(--color-text-secondary);
+            font-size: var(--text-sm);
+        }
+
+        /* 兑换码列表 */
+        .codes-section {
+            margin-top: var(--spacing-2xl);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-title {
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+        }
+
+        .codes-grid {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+
+        .code-item {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .code-item[data-type="gift"] {
+            border-left: 4px solid var(--color-warning);
+            background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%);
+        }
+
+        .code-item[data-type="checkin"] {
+            border-left: 4px solid var(--color-accent);
+        }
+
+        .code-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .code-text {
+            font-family: var(--font-mono);
+            font-size: 1.125rem;
+            font-weight: 400;
+            background: rgba(139, 184, 232, 0.1);
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
+            letter-spacing: 0.05em;
+            color: oklch(0.707 0.022 261.325);
+            border: 1px solid rgba(139, 184, 232, 0.2);
+            font-feature-settings: "liga" 0, "calt" 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 420px;
+            flex-shrink: 0;
+        }
+
+        .code-amount {
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            font-weight: 400;
+            color: #4ade80;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            white-space: nowrap;
+            width: 60px;
+            flex-shrink: 0;
+        }
+
+        .code-date {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: #9ca3af;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            opacity: 0.8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .copy-btn {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border-primary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .copy-btn:hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-border-focus);
+        }
+
+        .copy-btn.copied {
+            background: var(--color-success);
+            color: white;
+        }
+
+        /* 深色主题复制按钮样式（黑色背景+白色文字） */
+        .copy-btn-modern {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: #000000;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0.75rem;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            min-width: 80px;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .copy-btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            background: #1a1a1a;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .copy-btn-modern:active {
+            transform: translateY(0);
+        }
+
+        .copy-btn-modern.copied {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: #fff;
+        }
+
+        .copy-btn-modern.copied svg {
+            animation: checkmark 0.3s ease;
+        }
+
+        @keyframes checkmark {
+            0% {
+                transform: scale(0.8);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* 兑换码类型标识 */
+        .code-item[data-type="gift"] {
+            border-left: 4px solid var(--color-warning);
+            background: linear-gradient(90deg, rgba(255, 193, 7, 0.1) 0%, transparent 100%);
+        }
+
+        .code-item[data-type="checkin"] {
+            border-left: 4px solid var(--color-accent);
+        }
+
+        /* 查看全部按钮激活状态 */
+        .btn.active {
+            background: var(--color-accent);
+            color: var(--color-text-inverse);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-3xl) var(--spacing-lg);
+            color: var(--color-text-secondary);
+        }
+
+        .empty-icon {
+            font-size: var(--text-5xl);
+            margin-bottom: var(--spacing-md);
+            opacity: 0.3;
+        }
+
+        /* 加载状态 */
+        .loading-state {
+            padding: var(--spacing-lg);
+        }
+
+        .skeleton-loader {
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-md);
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* 待发放状态 */
+        .code-item.pending {
+            opacity: 0.7;
+            border-left: 4px solid var(--color-warning);
+        }
+
+        .text-warning {
+            color: var(--color-warning);
+        }
+
+        /* 优化后的赠送弹窗样式 */
+        .gift-modal {
+            max-width: 580px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gift-modal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            background-size: 300% 100%;
+            animation: rainbow 3s ease infinite;
+        }
+
+        @keyframes rainbow {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .gift-modal-header {
+            text-align: center;
+            padding: 2rem 2rem 1rem;
+            position: relative;
+        }
+
+        .gift-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .gift-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #feca57, #ff9ff3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gift-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .gift-modal-body {
+            padding: 1rem 2rem 2rem;
+        }
+
+        .gift-amount {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(254, 202, 87, 0.1), rgba(255, 159, 243, 0.1));
+            border-radius: 1rem;
+            border: 1px solid rgba(254, 202, 87, 0.2);
+        }
+
+        .currency {
+            font-size: 1.5rem;
+            color: #feca57;
+            font-weight: 600;
+        }
+
+        .amount {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #fff;
+            margin-left: 0.25rem;
+            text-shadow: 0 0 20px rgba(254, 202, 87, 0.5);
+        }
+
+        .gift-code-container {
+            margin-top: 1.5rem;
+        }
+
+        .code-label {
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .code-input-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: stretch;
+        }
+
+        .gift-code-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: rgba(139, 184, 232, 0.1);
+            border: 1px solid rgba(139, 184, 232, 0.2);
+            border-radius: 0.375rem;
+            color: oklch(0.707 0.022 261.325);
+            font-family: var(--font-mono);
+            font-size: 1.125rem;
+            font-weight: 400;
+            text-align: center;
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gift-code-input:focus {
+            outline: none;
+            border-color: #feca57;
+            box-shadow: 0 0 0 3px rgba(254, 202, 87, 0.2);
+        }
+
+        .copy-code-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            background: linear-gradient(135deg, #feca57, #ff9ff3);
+            border: none;
+            border-radius: 0.75rem;
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .copy-code-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(254, 202, 87, 0.4);
+        }
+
+        .copy-code-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 兑换码输入框样式 */
+        .gift-code-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: rgba(139, 184, 232, 0.1);
+            border: 1px solid rgba(139, 184, 232, 0.2);
+            border-radius: 0.375rem;
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            color: oklch(0.707 0.022 261.325);
+            letter-spacing: 0.05em;
+            font-feature-settings: "liga" 0, "calt" 0;
+            white-space: nowrap;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gift-code-input:focus {
+            outline: none;
+            border-color: #feca57;
+            box-shadow: 0 0 0 3px rgba(254, 202, 87, 0.2);
+        }
+
+        /* 兑换码容器样式 */
+        .gift-code-container {
+            margin-top: 1.5rem;
+        }
+
+        .code-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .code-input-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: stretch;
+        }
+
+        .gift-modal-footer {
+            padding: 1rem 2rem 2rem;
+            text-align: center;
+        }
+
+        .btn-close-gift {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 2rem;
+            color: #fff;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-close-gift:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar-content {
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            /* 移动端赠送弹窗优化 */
+            .gift-modal {
+                max-width: 90vw;
+                margin: 1rem;
+            }
+
+            .gift-modal-header {
+                padding: 1.5rem 1.5rem 1rem;
+            }
+
+            .gift-icon {
+                font-size: 3rem;
+            }
+
+            .gift-title {
+                font-size: 1.5rem;
+            }
+
+            .gift-modal-body {
+                padding: 1rem 1.5rem 1.5rem;
+            }
+
+            .gift-amount {
+                padding: 1rem;
+            }
+
+            .amount {
+                font-size: 2.5rem;
+            }
+
+            .code-input-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .copy-code-btn {
+                justify-content: center;
+            }
+
+            /* 移动端兑换码输入框优化 */
+            .code-input-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .gift-modal-footer {
+                padding: 1rem 1.5rem 1.5rem;
+            }
+
+            /* 移动端复制按钮优化 */
+            .copy-btn-modern {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.8rem;
+                min-width: 70px;
+            }
+
+            .copy-btn-modern svg {
+                width: 14px;
+                height: 14px;
+            }
+
+            /* 移动端兑换码列表布局优化 */
+            .code-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+
+            .code-info {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+            /* 移动端字体优化 */
+            .code-text {
+                font-size: 1rem;
+                padding: 0.25rem 0.5rem;
+                letter-spacing: 0.03em;
+                width: 100%;
+            }
+
+            .code-amount {
+                font-size: 0.9rem;
+                width: auto;
+            }
+
+            .code-date {
+                font-size: 0.8rem;
+                flex: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- 顶部导航 -->
+        <nav class="navbar">
+            <div class="navbar-content">
+                <div class="navbar-brand">
+                    <div class="navbar-logo">📅</div>
+                    <span>KYX 签到系统</span>
+                </div>
+                <div class="navbar-actions">
+                    <button class="theme-toggle" id="themeToggle" title="切换主题">
+                        <span id="themeIcon">🌙</span>
+                    </button>
+                    <div class="user-menu" id="userMenu">
+                        <div class="user-avatar" id="userAvatar">
+                            <span>👤</span>
+                        </div>
+                        <span class="user-name" id="userName">加载中...</span>
+                    </div>
+                    <button class="btn btn-sm btn-ghost" id="logoutBtn">退出</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 主内容 -->
+        <main class="main-content">
+            <!-- 签到卡片 -->
+            <div class="checkin-card">
+                <h1 class="checkin-title">每日签到</h1>
+                <p class="checkin-subtitle" id="checkinSubtitle">今日还未签到，点击下方按钮完成签到</p>
+                <button class="checkin-btn" id="checkinBtn">
+                    <span id="checkinBtnText">立即签到</span>
+                </button>
+
+                <!-- 简单测试按钮 -->
+                <button class="checkin-btn" style="background: #10b981; margin-top: 0.5rem;"
+                    onclick="window.simpleTest()">
+                    <span>✅ 简单测试</span>
+                </button>
+
+                <!-- 强制刷新按钮 -->
+                <button class="checkin-btn" style="background: #06b6d4; margin-top: 0.5rem;"
+                    onclick="window.forceRefreshCodes()">
+                    <span>🔄 强制刷新兑换码</span>
+                </button>
+
+                <!-- 通知状态管理 -->
+                <button class="checkin-btn" style="background: #ef4444; margin-top: 0.5rem;"
+                    onclick="window.clearNotificationState()">
+                    <span>🗑️ 清除通知状态</span>
+                </button>
+
+                <button class="checkin-btn" style="background: #8b5cf6; margin-top: 0.5rem;"
+                    onclick="window.checkNotificationState()">
+                    <span>📋 检查通知状态</span>
+                </button>
+
+                <!-- API验证按钮 -->
+                <button class="checkin-btn" style="background: #06b6d4; margin-top: 0.5rem;"
+                    onclick="window.validateAPIData()">
+                    <span>🔍 验证API数据</span>
+                </button>
+
+                <!-- 调试按钮 -->
+                <button class="checkin-btn" style="background: #f59e0b; margin-top: 0.5rem;"
+                    onclick="window.debugDataState()">
+                    <span>🐛 调试数据状态</span>
+                </button>
+
+                <!-- 弹窗控制测试按钮 -->
+                <button class="checkin-btn" style="background: #8b5cf6; margin-top: 0.5rem;"
+                    onclick="window.testModalControl()">
+                    <span>🎯 测试弹窗控制</span>
+                </button>
+
+                <!-- 重置弹窗状态按钮 -->
+                <button class="checkin-btn" style="background: #ef4444; margin-top: 0.5rem;"
+                    onclick="window.resetModalState()">
+                    <span>🔄 重置弹窗状态</span>
+                </button>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="totalCheckins">0</div>
+                    <div class="stat-label">总签到天数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-value" id="consecutiveDays">0</div>
+                    <div class="stat-label">连续签到</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎫</div>
+                    <div class="stat-value" id="totalCodes">0</div>
+                    <div class="stat-label">获得兑换码</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="totalAmount">0</div>
+                    <div class="stat-label">累计金额</div>
+                </div>
+            </div>
+
+            <!-- 兑换码列表 -->
+            <div class="codes-section">
+                <div class="section-header">
+                    <h2 class="section-title">我的兑换码</h2>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-sm btn-secondary" onclick="window.forceRefreshCodes()">🔄 强制刷新</button>
+                        <button class="btn btn-sm btn-secondary" id="viewAllBtn">查看全部</button>
+                    </div>
+                </div>
+                <div class="codes-grid" id="codesList">
+                    <div class="empty-state">
+                        <div class="empty-icon">📦</div>
+                        <p>暂无兑换码</p>
+                        <p class="text-sm text-secondary">完成签到后即可获得兑换码</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 兑换码弹窗 -->
+    <div class="modal" id="codeModal">
+        <div class="modal-backdrop" onclick="closeModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>签到成功！</h3>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">恭喜您获得兑换码：</p>
+                <div class="code-display">
+                    <input type="text" class="input" id="modalCodeInput" readonly>
+                    <button class="btn btn-primary mt-3" onclick="copyModalCode()">复制兑换码</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+            </div>
+        </div>
+        <!-- 待分配弹窗 -->
+        <div class="modal" id="pendingModal">
+            <div class="modal-backdrop" onclick="this.parentElement.classList.remove('active')"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>⏳ 兑换码待分配</h3>
+                </div>
+                <div class="modal-body">
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">📦</div>
+                        <p style="font-size: 18px; margin-bottom: 10px;">签到成功！</p>
+                        <p style="color: var(--color-text-secondary); line-height: 1.6;">
+                            当前兑换码库存不足，请联系管理员补充兑换码。<br>
+                            管理员补发后，您将收到通知。
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary"
+                        onclick="this.closest('.modal').classList.remove('active')">我知道了</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 优化后的系统赠送弹窗 -->
+    <div class="modal" id="giftModal">
+        <div class="modal-backdrop" onclick="closeGiftModal()"></div>
+        <div class="modal-content gift-modal">
+            <div class="gift-modal-header">
+                <div class="gift-icon">🎁</div>
+                <h3 class="gift-title">系统赠送</h3>
+                <p class="gift-subtitle">恭喜您获得兑换码奖励！</p>
+                <button class="modal-close" onclick="closeGiftModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+            <div class="gift-modal-body">
+                <div class="gift-amount">
+                    <span class="currency">$</span>
+                    <span class="amount" id="giftAmount">10</span>
+                </div>
+                <div class="gift-code-container">
+                    <label class="code-label">您的兑换码</label>
+                    <div class="code-input-group">
+                        <input type="text" id="giftCodeInput" readonly class="gift-code-input">
+                        <button class="copy-code-btn" onclick="copyGiftCode()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor"
+                                    stroke-width="2" />
+                                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                            <span>复制</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="gift-modal-footer">
+                <button class="btn-close-gift" onclick="closeGiftModal()">
+                    <span>我知道了</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12h14m-7-7l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: kyx-mysql-dev
+    environment:
+      MYSQL_ROOT_PASSWORD: kyx200328
+      MYSQL_DATABASE: kyx_system
+      MYSQL_USER: kyx_user
+      MYSQL_PASSWORD: kyx200328
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:7-alpine
+    container_name: kyx-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes
+
+volumes:
+  mysql_dev_data:
+  redis_dev_data:

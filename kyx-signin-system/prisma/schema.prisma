@@ -1,0 +1,309 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 用户表
+model User {
+  id                    Int      @id @default(autoincrement())
+  linuxdo_id           String   @unique
+  username             String
+  email                String?
+  avatar_url           String?
+  linuxdo_level        Int      @default(0)
+  current_level        Int      @default(1)
+  experience           Int      @default(0)
+  total_checkins       Int      @default(0)
+  consecutive_checkins Int      @default(0)
+  max_consecutive      Int      @default(0)
+  last_checkin_date    DateTime?
+  status               String   @default("active") // active, banned, inactive
+  admin_notes          String?  @db.Text
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  // 关联关系
+  checkins             CheckIn[]
+  redemptionCodes      RedemptionCode[]
+  lotteryRecords       UserLotteryRecord[]
+  lotteryStats         UserLotteryStats[]
+  experienceLogs       UserExperienceLog[]
+  levelHistory         UserLevelHistory[]
+  levelRewards         UserLevelReward[]
+  items                UserItem[]
+  activityEffects      UserActivityEffect[]
+
+  @@map("users")
+}
+
+// 签到记录表
+model CheckIn {
+  id                Int      @id @default(autoincrement())
+  user_id          Int
+  checkin_date     DateTime @default(now())
+  consecutive_days Int      @default(1)
+  base_reward      Int      @default(0)
+  level_bonus      Int      @default(0)
+  activity_bonus   Int      @default(0)
+  total_reward     Int      @default(0)
+  redemption_code  String?
+  created_at       DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, checkin_date])
+  @@map("check_ins")
+}
+
+// 兑换码表
+model RedemptionCode {
+  id           Int      @id @default(autoincrement())
+  code         String   @unique
+  amount       Decimal  @db.Decimal(10, 2)
+  user_id      Int?
+  distributed  Boolean  @default(false)
+  source       String   @default("checkin") // checkin, lottery, admin
+  batch_id     String?
+  created_at   DateTime @default(now())
+  distributed_at DateTime?
+
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
+  @@map("redemption_codes")
+}
+
+// 用户等级配置表
+model UserLevel {
+  id                Int    @id @default(autoincrement())
+  level             Int    @unique
+  name              String
+  required_exp      Int
+  checkin_bonus     Float  @default(1.0)
+  lottery_attempts  Int    @default(1)
+  description       String? @db.Text
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  rewards UserLevelReward[]
+
+  @@map("user_levels")
+}
+
+// 用户升级历史表
+model UserLevelHistory {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  old_level  Int
+  new_level  Int
+  experience Int
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_level_history")
+}
+
+// 等级奖励配置表
+model LevelReward {
+  id          Int    @id @default(autoincrement())
+  level       Int
+  reward_type String // experience, item, code
+  reward_data String @db.Text // JSON格式存储奖励数据
+  created_at  DateTime @default(now())
+
+  userRewards UserLevelReward[]
+
+  @@map("level_rewards")
+}
+
+// 用户等级奖励领取记录表
+model UserLevelReward {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  level_id   Int
+  reward_id  Int
+  claimed_at DateTime @default(now())
+
+  user   User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  level  UserLevel   @relation(fields: [level_id], references: [id], onDelete: Cascade)
+  reward LevelReward @relation(fields: [reward_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, reward_id])
+  @@map("user_level_rewards")
+}
+
+// 奖品池表
+model PrizePool {
+  id          Int    @id @default(autoincrement())
+  name        String
+  type        String // item, experience, code
+  rarity      String // common, rare, epic, legendary
+  effect_data String? @db.Text // JSON格式存储效果数据
+  icon_url    String?
+  description String? @db.Text
+  is_active   Boolean @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  wheelItems WheelItem[]
+  userItems  UserItem[]
+
+  @@map("prize_pool")
+}
+
+// 转盘配置表
+model WheelConfig {
+  id                Int     @id @default(autoincrement())
+  level             Int     @unique
+  daily_attempts    Int     @default(1)
+  guaranteed_prize  Boolean @default(false)
+  guaranteed_after  Int     @default(10)
+  is_active         Boolean @default(true)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  items WheelItem[]
+
+  @@map("wheel_config")
+}
+
+// 转盘奖品配置表
+model WheelItem {
+  id           Int     @id @default(autoincrement())
+  wheel_id     Int
+  prize_id     Int
+  probability  Float   // 0-100的概率值
+  position     Int     // 转盘上的位置
+  is_active    Boolean @default(true)
+  created_at   DateTime @default(now())
+
+  wheel WheelConfig @relation(fields: [wheel_id], references: [id], onDelete: Cascade)
+  prize PrizePool  @relation(fields: [prize_id], references: [id], onDelete: Cascade)
+
+  @@unique([wheel_id, position])
+  @@map("wheel_items")
+}
+
+// 用户抽奖记录表
+model UserLotteryRecord {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  wheel_id   Int
+  prize_id   Int?
+  position   Int
+  is_winner  Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  prize PrizePool? @relation(fields: [prize_id], references: [id], onDelete: SetNull)
+
+  @@map("user_lottery_records")
+}
+
+// 用户抽奖统计表
+model UserLotteryStats {
+  id                Int      @id @default(autoincrement())
+  user_id          Int
+  date             DateTime @default(now())
+  attempts_used    Int      @default(0)
+  attempts_total   Int      @default(1)
+  no_win_streak    Int      @default(0)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, date])
+  @@map("user_lottery_stats")
+}
+
+// 用户物品表
+model UserItem {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  prize_id   Int
+  quantity   Int      @default(1)
+  source     String   @default("lottery") // lottery, reward, admin
+  obtained_at DateTime @default(now())
+
+  user  User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  prize PrizePool @relation(fields: [prize_id], references: [id], onDelete: Cascade)
+
+  @@map("user_items")
+}
+
+// 用户经验日志表
+model UserExperienceLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  amount     Int
+  source     String   // checkin, level_reward, admin
+  description String?
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_experience_logs")
+}
+
+// 用户活动效果表
+model UserActivityEffect {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  effect_type String   // exp_boost, checkin_bonus, lottery_luck
+  effect_data String   @db.Text // JSON格式存储效果数据
+  expires_at  DateTime?
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_activity_effects")
+}
+
+// 管理员表
+model Admin {
+  id         Int      @id @default(autoincrement())
+  username   String   @unique
+  password   String
+  role       String   @default("admin") // admin, super_admin, readonly
+  last_login DateTime?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("admins")
+}
+
+// 操作日志表
+model OperationLog {
+  id          Int      @id @default(autoincrement())
+  admin_id    Int?
+  operation   String
+  target_type String?  // user, code, prize, etc.
+  target_id   String?
+  details     String?  @db.Text
+  ip_address  String?
+  user_agent  String?  @db.Text
+  created_at  DateTime @default(now())
+
+  @@map("operation_logs")
+}
+
+// 系统配置表
+model SystemConfig {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique
+  value      String   @db.Text
+  description String? @db.Text
+  updated_at DateTime @updatedAt
+
+  @@map("system_config")
+}

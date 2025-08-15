@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>我的兑换码 · 预览</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --elev: #1a1a1a;
+            --text: #ffffff;
+            --text-sub: #b3b3b3;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --border: #333333;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Microsoft Yahei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        /* 背景层（与 index 预览一致） */
+        .bg-decoration {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(66, 133, 244, .10) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(16, 185, 129, .10) 0%, transparent 50%);
+            z-index: 0;
+        }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image: repeating-linear-gradient(0deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 50px),
+                repeating-linear-gradient(90deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 50px);
+            background-size: 50px 50px;
+            animation: gridMove 30s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% {
+                background-position: 0 0, 0 0;
+                filter: hue-rotate(0deg);
+            }
+
+            100% {
+                background-position: 200px 200px, 200px 200px;
+                filter: hue-rotate(15deg);
+            }
+        }
+
+        .noise {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: .07;
+            mix-blend-mode: soft-light;
+            background-size: cover;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.8'/></svg>");
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: min(95vw, 1600px);
+            margin: 48px auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, .06);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            backdrop-filter: blur(14px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, .14);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .30);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .sub {
+            color: var(--text-sub);
+            margin-top: 6px;
+            font-size: 14px;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search {
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .14);
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: var(--text);
+            width: 260px;
+            outline: none;
+        }
+
+        .chip {
+            border: 1px solid rgba(255, 255, 255, .28);
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .25);
+            color: #fff;
+            cursor: pointer;
+            user-select: none;
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+            transition: transform .15s, background .2s, border-color .2s;
+        }
+
+        .chip:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, .10);
+            border-color: rgba(255, 255, 255, .45);
+        }
+
+        .chip.active {
+            background: rgba(59, 130, 246, .18);
+            border-color: rgba(59, 130, 246, .55);
+        }
+
+        .card {
+            margin-top: 10px;
+            background: rgba(255, 255, 255, .06);
+            -webkit-backdrop-filter: blur(14px) saturate(140%);
+            backdrop-filter: blur(14px) saturate(140%);
+            border: 1px solid rgba(255, 255, 255, .14);
+            border-radius: var(--radius);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .3);
+        }
+
+        /* 立即兑换 CTA */
+        .cta-bar {
+            margin: 8px 0 16px;
+        }
+
+        .cta-link {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            color: #fff;
+            text-decoration: none;
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .28);
+            -webkit-backdrop-filter: blur(10px) saturate(120%);
+            backdrop-filter: blur(10px) saturate(120%);
+            transition: transform .15s, box-shadow .2s, background .2s, border-color .2s;
+            width: 100%;
+        }
+
+        .cta-link:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, .10);
+            border-color: rgba(255, 255, 255, .45);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
+        }
+
+        .cta-link svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .card-header {
+            padding: 14px 18px;
+            border-bottom: 1px dashed rgba(255, 255, 255, .16);
+            color: var(--text-sub);
+            font-size: 14px;
+            display: grid;
+            grid-template-columns: 260px 120px 140px 1fr 86px;
+            /* 时间 | 来源 | 金额 | 兑换码 | 操作 */
+            gap: 12px;
+        }
+
+        .rows {
+            padding: 10px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 260px 120px 140px 1fr 86px;
+            /* 与表头一致 */
+            gap: 12px;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(255, 255, 255, .04);
+            border-radius: 10px;
+            padding: 10px 12px;
+            -webkit-backdrop-filter: blur(8px) saturate(120%);
+            backdrop-filter: blur(8px) saturate(120%);
+            transition: transform .15s, box-shadow .2s, border-color .2s;
+        }
+
+        .row+.row {
+            margin-top: 10px;
+        }
+
+        .row:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+            border-color: rgba(255, 255, 255, .28);
+        }
+
+        .pager {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            border-top: 1px dashed rgba(255, 255, 255, .16);
+        }
+
+        .pager button {
+            background: rgba(0, 0, 0, .25);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, .28);
+            border-radius: 10px;
+            padding: 8px 12px;
+            cursor: pointer;
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+            transition: transform .15s, background .2s, border-color .2s;
+        }
+
+        .pager button:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, .10);
+            border-color: rgba(255, 255, 255, .45);
+        }
+
+        .pager button[disabled] {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .pager .active {
+            background: rgba(59, 130, 246, .18);
+            border-color: rgba(59, 130, 246, .55);
+        }
+
+        .code {
+            font-family: 'Courier New', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-weight: 700;
+            letter-spacing: .02em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .code-box {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            background: rgba(139, 184, 232, 0.10);
+            border: 1px solid rgba(139, 184, 232, 0.20);
+            border-radius: 8px;
+            padding: 8px 12px;
+        }
+
+        .time {
+            color: var(--text-sub);
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+        .amount {
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(16, 185, 129, .38);
+            background: rgba(16, 185, 129, .12);
+            color: #b6ffdf;
+            font-weight: 700;
+        }
+
+        .date {
+            color: var(--text-sub);
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .source {
+            color: var(--text-sub);
+            padding-left: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .col-source {
+            padding-left: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .col-amount {
+            text-align: center;
+        }
+
+        .copy {
+            width: 46px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, .28);
+            background: rgba(0, 0, 0, .25);
+            color: #fff;
+            cursor: pointer;
+            transition: transform .15s, box-shadow .2s, background .2s, border-color .2s;
+            -webkit-backdrop-filter: blur(6px) saturate(120%);
+            backdrop-filter: blur(6px) saturate(120%);
+        }
+
+        .copy:hover {
+            transform: scale(1.06);
+            box-shadow: 0 6px 16px rgba(255, 255, 255, .12);
+            background: rgba(255, 255, 255, .10);
+            border-color: rgba(255, 255, 255, .45);
+        }
+
+        .copy.copied {
+            background: rgba(16, 185, 129, .12);
+            border-color: rgba(16, 185, 129, .7);
+            color: var(--success);
+            transform: scale(1.04);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, .35) inset, 0 10px 18px rgba(16, 185, 129, .25);
+        }
+
+
+
+        .toast {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 5;
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .18);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            transform: translateX(120%);
+            transition: transform .25s ease;
+            -webkit-backdrop-filter: blur(10px) saturate(140%);
+            backdrop-filter: blur(10px) saturate(140%);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 900px) {
+
+            .card-header,
+            .row {
+                grid-template-columns: 1fr 90px 80px 70px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                width: 94vw;
+                margin: 32px auto;
+            }
+
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .actions {
+                width: 100%;
+            }
+
+            .search {
+                width: 100%;
+            }
+
+            .card-header {
+                grid-template-columns: 1fr auto;
+            }
+
+            .card-header .col-amount,
+            .card-header .col-date,
+            .card-header .col-time {
+                display: none;
+            }
+
+            .row {
+                grid-template-columns: 1fr 50px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-decoration"></div>
+    <div class="grid-bg"></div>
+    <div class="noise"></div>
+
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 class="title">我的兑换码</h1>
+                <div class="sub" id="countSub">共 0 个兑换码</div>
+            </div>
+            <div class="actions">
+                <input id="search" class="search" placeholder="搜索兑换码…" />
+                <button class="chip active" data-filter="all">全部</button>
+                <button class="chip" data-filter="checkin">签到</button>
+                <button class="chip" data-filter="gift">系统赠送</button>
+            </div>
+        </div>
+
+        <div class="cta-bar">
+            <a class="cta-link" href="https://api.kkyyxx.xyz/console/topup" target="_blank" rel="noopener noreferrer"
+                title="在新窗口打开">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" stroke="currentColor" stroke-width="1.6"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+                    <span>立即兑换</span>
+                    <span style="opacity:.7; font-size:12px;">在新页面打开 →</span>
+                </div>
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="col-time">时间</div>
+                <div class="col-source">来源</div>
+                <div class="col-amount">金额</div>
+                <div>兑换码</div>
+                <div>操作</div>
+            </div>
+            <div class="rows" id="rows"></div>
+            <div id="pager" class="pager"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">已复制到剪贴板</div>
+
+    <script>
+        const rowsEl = document.getElementById('rows');
+        const countSub = document.getElementById('countSub');
+        const searchEl = document.getElementById('search');
+        const toastEl = document.getElementById('toast');
+        const chips = Array.from(document.querySelectorAll('.chip'));
+
+        // Demo 数据
+        const demo = Array.from({ length: 15 }).map((_, i) => {
+            const amount = [2.5, 3, 5, 6, 8, 10][i % 6];
+            const code = (Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)).slice(0, 32).toUpperCase();
+            const source = i % 3 === 0 ? 'gift' : 'checkin';
+            const created_at = new Date(Date.now() - i * 1000 * 60 * 60).toISOString();
+            return { code, amount, source, created_at };
+        }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        let state = { filter: 'all', q: '', page: 1, size: 10 };
+
+        function pad32(s) {
+            const fill = '................................';
+            return (s + fill).slice(0, 32);
+        }
+
+        function formatDate(iso) {
+            const d = new Date(iso);
+            const p = n => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+        }
+
+        function getFiltered() {
+            return demo.filter(item => (state.filter === 'all' || item.source === state.filter) && (!state.q || item.code.includes(state.q.toUpperCase())));
+        }
+
+        function render() {
+            const list = getFiltered();
+            countSub.textContent = `共 ${list.length} 个兑换码`;
+            const start = (state.page - 1) * state.size;
+            const pageItems = list.slice(start, start + state.size);
+            rowsEl.innerHTML = pageItems.map(item => {
+                const label = item.source === 'gift' ? '系统赠送' : '签到';
+                return `
+                <div class="row" data-source="${item.source}">
+                    <div class="time">${formatDate(item.created_at)}</div>
+                    <div class="source ${item.source === 'gift' ? 'source--gift' : 'source--checkin'}">${label}</div>
+                    <div class="amount"><span class="badge">$${item.amount.toFixed(2)}</span></div>
+                    <div class="code-box"><div class="code">${pad32(item.code)}</div></div>
+                    <button class="copy" onclick="copyCode('${item.code}', this)" title="复制">
+                        <svg class="icon-copy" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                            <rect x="4" y="4" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.6" opacity="0.6"/>
+                        </svg>
+                        <svg class="icon-check" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
+                            <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>`;
+            }).join('');
+            renderPager(list.length);
+        }
+
+        function renderPager(total) {
+            const pager = document.getElementById('pager');
+            const totalPages = Math.max(1, Math.ceil(total / state.size));
+            if (totalPages <= 1) { pager.innerHTML = ''; return; }
+            let html = '';
+            html += `<button ${state.page === 1 ? 'disabled' : ''} data-act="prev">上一页</button>`;
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button data-page="${i}" class="${i === state.page ? 'active' : ''}">${i}</button>`;
+            }
+            html += `<button ${state.page === totalPages ? 'disabled' : ''} data-act="next">下一页</button>`;
+            pager.innerHTML = html;
+            pager.querySelectorAll('button[data-page]').forEach(btn => btn.addEventListener('click', () => { state.page = Number(btn.dataset.page); render(); }));
+            const prev = pager.querySelector('button[data-act="prev"]'); if (prev) prev.addEventListener('click', () => { if (state.page > 1) { state.page--; render(); } });
+            const next = pager.querySelector('button[data-act="next"]'); if (next) next.addEventListener('click', () => { const tp = Math.ceil(total / state.size); if (state.page < tp) { state.page++; render(); } });
+        }
+
+        function showToast(msg) { toastEl.textContent = msg; toastEl.classList.add('show'); setTimeout(() => toastEl.classList.remove('show'), 2500); }
+
+        window.copyCode = async (code, btn) => {
+            try {
+                await navigator.clipboard.writeText(code);
+                btn.classList.add('copied');
+                btn.querySelector('.icon-copy').style.display = 'none';
+                btn.querySelector('.icon-check').style.display = 'block';
+                showToast('兑换码已复制');
+                setTimeout(() => { btn.classList.remove('copied'); btn.querySelector('.icon-copy').style.display = 'block'; btn.querySelector('.icon-check').style.display = 'none'; }, 2000);
+            } catch (e) { showToast('复制失败，请手动复制'); }
+        };
+
+
+
+        chips.forEach(c => c.addEventListener('click', () => { chips.forEach(x => x.classList.remove('active')); c.classList.add('active'); state.filter = c.dataset.filter; state.page = 1; render(); }));
+        let to = null; searchEl.addEventListener('input', e => { clearTimeout(to); to = setTimeout(() => { state.q = e.target.value.trim(); state.page = 1; render(); }, 300); });
+
+        render();
+    </script>
+</body>
+
+</html>

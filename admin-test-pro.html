@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYX 管理后台专业测试工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f0f;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .panel h3 {
+            color: #4285f4;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 4px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #3367d6;
+        }
+
+        .btn.success {
+            background: #34a853;
+        }
+
+        .btn.danger {
+            background: #ea4335;
+        }
+
+        .btn.warning {
+            background: #fbbc04;
+            color: #000;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .status.pending {
+            background: #333;
+            color: #999;
+        }
+
+        .status.success {
+            background: #1e4620;
+            color: #4caf50;
+        }
+
+        .status.error {
+            background: #4a1e1e;
+            color: #f44336;
+        }
+
+        .result {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: #4285f4;
+        }
+
+        input {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 4px;
+            width: 120px;
+        }
+
+        .progress {
+            background: #333;
+            border-radius: 4px;
+            height: 8px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: #4285f4;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .log {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+
+        .log-entry.info {
+            color: #4285f4;
+        }
+
+        .log-entry.success {
+            color: #34a853;
+        }
+
+        .log-entry.error {
+            color: #ea4335;
+        }
+
+        .log-entry.warning {
+            color: #fbbc04;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 KYX 管理后台专业测试工具</h1>
+            <p>🌐 测试地址: <strong id="testUrl">https://kyxsgiadmin.kyxjames23.workers.dev/</strong></p>
+            <p>📋 网站类型: <strong>专用管理后台</strong> (无需 /admin 路径)</p>
+            <div class="progress">
+                <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+            </div>
+            <p id="progressText">准备开始测试...</p>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h3>🌐 连接测试</h3>
+                <button class="btn" onclick="testConnection()">测试服务器连接</button>
+                <span id="connectionStatus" class="status pending">待测试</span>
+                <br>
+                <button class="btn" onclick="testCORS()">测试跨域设置</button>
+                <span id="corsStatus" class="status pending">待测试</span>
+                <div id="connectionResult" class="result"></div>
+            </div>
+
+            <div class="panel">
+                <h3>🔐 认证测试</h3>
+                <input type="text" id="username" placeholder="用户名" value="admin">
+                <input type="password" id="password" placeholder="密码" value="admin123">
+                <br>
+                <button class="btn" onclick="testLogin()">登录测试</button>
+                <span id="loginStatus" class="status pending">待测试</span>
+                <div id="loginResult" class="result"></div>
+            </div>
+
+            <div class="panel">
+                <h3>📊 API端点测试</h3>
+                <button class="btn" onclick="testDashboard()">仪表盘</button>
+                <span id="dashboardStatus" class="status pending">待测试</span>
+                <br>
+                <button class="btn" onclick="testCodes()">兑换码</button>
+                <span id="codesStatus" class="status pending">待测试</span>
+                <br>
+                <button class="btn" onclick="testUsers()">用户</button>
+                <span id="usersStatus" class="status pending">待测试</span>
+                <br>
+                <button class="btn" onclick="testCheckins()">签到</button>
+                <span id="checkinsStatus" class="status pending">待测试</span>
+                <div id="apiResult" class="result"></div>
+            </div>
+
+            <div class="panel">
+                <h3>⚡ 功能测试</h3>
+                <button class="btn" onclick="testGenerate()">生成兑换码</button>
+                <span id="generateStatus" class="status pending">待测试</span>
+                <br>
+                <button class="btn" onclick="testSearch()">搜索功能</button>
+                <span id="searchStatus" class="status pending">待测试</span>
+                <br>
+                <button class="btn" onclick="testDebugMode()">调试模式</button>
+                <span id="debugStatus" class="status pending">待测试</span>
+                <br>
+                <button class="btn" onclick="testPageAccess()">页面访问</button>
+                <span id="pageAccessStatus" class="status pending">待测试</span>
+                <div id="functionResult" class="result"></div>
+            </div>
+
+            <div class="panel full-width">
+                <h3>📈 测试统计</h3>
+                <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <div class="metric">
+                        <span>总测试项</span>
+                        <span class="metric-value" id="totalTests">0</span>
+                    </div>
+                    <div class="metric">
+                        <span>通过</span>
+                        <span class="metric-value" id="passedTests" style="color: #34a853;">0</span>
+                    </div>
+                    <div class="metric">
+                        <span>失败</span>
+                        <span class="metric-value" id="failedTests" style="color: #ea4335;">0</span>
+                    </div>
+                    <div class="metric">
+                        <span>成功率</span>
+                        <span class="metric-value" id="successRate">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>🚀 快速操作</h3>
+                <button class="btn success" onclick="runAllTests()">🔄 运行所有测试</button>
+                <button class="btn" onclick="quickHealthCheck()">⚡ 快速健康检查</button>
+                <br>
+                <button class="btn warning" onclick="openAdminPanel()">🌐 打开管理后台</button>
+                <button class="btn" onclick="openLoginPage()">🔐 打开登录页面</button>
+                <br>
+                <button class="btn" onclick="exportReport()">📄 导出报告</button>
+                <button class="btn danger" onclick="clearResults()">🧹 清除结果</button>
+            </div>
+
+            <div class="panel">
+                <h3>📝 实时日志</h3>
+                <div id="testLog" class="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_BASE_URL = 'https://kyxsgiadmin.kyxjames23.workers.dev';
+        const API_BASE_URL = 'https://kyxsgiadmin.kyxjames23.workers.dev/api/admin';
+
+        let testResults = {};
+        let testLog = [];
+        let currentTestIndex = 0;
+        let totalTests = 0;
+
+        // 测试配置
+        const TEST_CONFIG = {
+            timeout: 10000, // 10秒超时
+            retryCount: 2,   // 重试次数
+            delay: 500       // 测试间隔
+        };
+
+        // 初始化
+        document.getElementById('testUrl').textContent = ADMIN_BASE_URL;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = `[${timestamp}] ${message}`;
+            testLog.push({ timestamp, message, type });
+
+            const logElement = document.getElementById('testLog');
+            const entryElement = document.createElement('div');
+            entryElement.className = `log-entry ${type}`;
+            entryElement.textContent = entry;
+            logElement.appendChild(entryElement);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(id, success) {
+            const element = document.getElementById(id);
+            element.className = 'status ' + (success ? 'success' : 'error');
+            element.textContent = success ? '✅ 通过' : '❌ 失败';
+        }
+
+        function updateProgress() {
+            const total = Object.keys(testResults).length;
+            const completed = Object.values(testResults).filter(r => r !== null).length;
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const failed = Object.values(testResults).filter(r => r === false).length;
+
+            const progressPercent = total > 0 ? (completed / total) * 100 : 0;
+            const successRate = completed > 0 ? (passed / completed) * 100 : 0;
+
+            document.getElementById('progressBar').style.width = progressPercent + '%';
+            document.getElementById('progressText').textContent =
+                `测试进度: ${completed}/${total} (${progressPercent.toFixed(1)}%)`;
+
+            document.getElementById('totalTests').textContent = total;
+            document.getElementById('passedTests').textContent = passed;
+            document.getElementById('failedTests').textContent = failed;
+            document.getElementById('successRate').textContent = successRate.toFixed(1) + '%';
+        }
+
+        async function makeRequest(url, options = {}) {
+            // 构建完整URL
+            let fullUrl;
+            if (url.startsWith('http')) {
+                fullUrl = url;
+            } else if (url.startsWith('/api/admin/')) {
+                fullUrl = ADMIN_BASE_URL + url;
+            } else {
+                fullUrl = API_BASE_URL + url;
+            }
+
+            const startTime = Date.now();
+
+            try {
+                log(`🔄 请求: ${options.method || 'GET'} ${fullUrl}`, 'info');
+
+                const response = await fetch(fullUrl, {
+                    mode: 'cors',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                const duration = Date.now() - startTime;
+                const text = await response.text();
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = {
+                        error: 'Invalid JSON',
+                        text: text,
+                        contentType: response.headers.get('content-type')
+                    };
+                }
+
+                log(`📡 响应: ${response.status} (${duration}ms)`, response.ok ? 'success' : 'error');
+
+                return {
+                    ok: response.ok,
+                    status: response.status,
+                    data: data,
+                    duration: duration,
+                    url: fullUrl
+                };
+            } catch (error) {
+                const duration = Date.now() - startTime;
+                log(`❌ 请求失败: ${error.message}`, 'error');
+                return { ok: false, error: error.message, duration: duration, url: fullUrl };
+            }
+        }
+
+        // 测试函数
+        async function testConnection() {
+            testResults.connection = null;
+            updateProgress();
+
+            try {
+                const startTime = Date.now();
+                const result = await fetch(ADMIN_BASE_URL, { method: 'HEAD', mode: 'cors' });
+                const duration = Date.now() - startTime;
+
+                testResults.connection = result.ok;
+                updateStatus('connectionStatus', result.ok);
+
+                const details = `状态: ${result.status}\n响应时间: ${duration}ms\n服务器: ${result.headers.get('server') || '未知'}`;
+                document.getElementById('connectionResult').textContent = details;
+
+                log(`服务器连接测试: ${result.ok ? '成功' : '失败'} (${duration}ms)`, result.ok ? 'success' : 'error');
+            } catch (error) {
+                testResults.connection = false;
+                updateStatus('connectionStatus', false);
+                document.getElementById('connectionResult').textContent = `连接失败: ${error.message}`;
+                log(`服务器连接失败: ${error.message}`, 'error');
+            }
+            updateProgress();
+        }
+
+        async function testCORS() {
+            testResults.cors = null;
+            updateProgress();
+
+            try {
+                const result = await makeRequest('/api/admin/stats');
+                testResults.cors = result.ok || result.status === 401;
+                updateStatus('corsStatus', testResults.cors);
+
+                const details = `CORS测试: ${testResults.cors ? '通过' : '失败'}\n状态码: ${result.status}\n请求URL: ${result.url}`;
+                document.getElementById('connectionResult').textContent = details;
+
+                log(`CORS测试: ${testResults.cors ? '通过' : '失败'}`, testResults.cors ? 'success' : 'error');
+            } catch (error) {
+                testResults.cors = false;
+                updateStatus('corsStatus', false);
+                log(`CORS测试失败: ${error.message}`, 'error');
+            }
+            updateProgress();
+        }
+
+        async function testLogin() {
+            testResults.login = null;
+            updateProgress();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const result = await makeRequest('/api/admin/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+
+            testResults.login = result.ok && result.data && result.data.success;
+            updateStatus('loginStatus', testResults.login);
+
+            const details = testResults.login ?
+                `✅ 登录成功\n用户: ${username}\n响应时间: ${result.duration}ms\n请求URL: ${result.url}` :
+                `❌ 登录失败\n错误: ${result.error || result.data?.message || '未知错误'}\n请求URL: ${result.url}`;
+
+            document.getElementById('loginResult').textContent = details;
+            log(`登录测试: ${testResults.login ? '成功' : '失败'}`, testResults.login ? 'success' : 'error');
+            updateProgress();
+        }
+
+        async function testDashboard() {
+            testResults.dashboard = null;
+            updateProgress();
+
+            const result = await makeRequest('/api/admin/stats');
+            testResults.dashboard = result.ok && result.data && result.data.success;
+            updateStatus('dashboardStatus', testResults.dashboard);
+
+            const details = testResults.dashboard ?
+                `✅ 仪表盘数据加载成功\n响应时间: ${result.duration}ms\n统计项: ${Object.keys(result.data.stats || {}).length}` :
+                `❌ 仪表盘加载失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+            document.getElementById('apiResult').textContent = details;
+            log(`仪表盘测试: ${testResults.dashboard ? '成功' : '失败'}`, testResults.dashboard ? 'success' : 'error');
+            updateProgress();
+        }
+
+        async function testCodes() {
+            testResults.codes = null;
+            updateProgress();
+
+            const result = await makeRequest('/api/admin/codes?page=1&limit=5');
+            testResults.codes = result.ok && result.data && result.data.success;
+            updateStatus('codesStatus', testResults.codes);
+
+            const details = testResults.codes ?
+                `✅ 兑换码数据加载成功\n响应时间: ${result.duration}ms\n数量: ${result.data.codes?.length || 0}` :
+                `❌ 兑换码加载失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+            document.getElementById('apiResult').textContent = details;
+            log(`兑换码测试: ${testResults.codes ? '成功' : '失败'}`, testResults.codes ? 'success' : 'error');
+            updateProgress();
+        }
+
+        async function testUsers() {
+            testResults.users = null;
+            updateProgress();
+
+            const result = await makeRequest('/api/admin/users?page=1&limit=5');
+            testResults.users = result.ok && result.data && result.data.success;
+            updateStatus('usersStatus', testResults.users);
+
+            const details = testResults.users ?
+                `✅ 用户数据加载成功\n响应时间: ${result.duration}ms\n数量: ${result.data.users?.length || 0}` :
+                `❌ 用户数据加载失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+            document.getElementById('apiResult').textContent = details;
+            log(`用户测试: ${testResults.users ? '成功' : '失败'}`, testResults.users ? 'success' : 'error');
+            updateProgress();
+        }
+
+        async function testCheckins() {
+            testResults.checkins = null;
+            updateProgress();
+
+            const result = await makeRequest('/api/admin/checkins?page=1&limit=5');
+            testResults.checkins = result.ok && result.data && result.data.success;
+            updateStatus('checkinsStatus', testResults.checkins);
+
+            const details = testResults.checkins ?
+                `✅ 签到数据加载成功\n响应时间: ${result.duration}ms\n数量: ${result.data.checkins?.length || 0}` :
+                `❌ 签到数据加载失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+            document.getElementById('apiResult').textContent = details;
+            log(`签到测试: ${testResults.checkins ? '成功' : '失败'}`, testResults.checkins ? 'success' : 'error');
+            updateProgress();
+        }
+
+        async function testGenerate() {
+            testResults.generate = null;
+            updateProgress();
+
+            const result = await makeRequest('/api/admin/codes/generate', {
+                method: 'POST',
+                body: JSON.stringify({ count: 2, amount: 5.00, adminId: 1 })
+            });
+
+            testResults.generate = result.ok && result.data && result.data.success;
+            updateStatus('generateStatus', testResults.generate);
+
+            const details = testResults.generate ?
+                `✅ 兑换码生成成功\n响应时间: ${result.duration}ms\n消息: ${result.data.message}` :
+                `❌ 兑换码生成失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+            document.getElementById('functionResult').textContent = details;
+            log(`生成测试: ${testResults.generate ? '成功' : '失败'}`, testResults.generate ? 'success' : 'error');
+            updateProgress();
+        }
+
+        async function testSearch() {
+            testResults.search = null;
+            updateProgress();
+
+            const result = await makeRequest('/api/admin/codes/search?q=TEST');
+            testResults.search = result.ok && result.data && result.data.success;
+            updateStatus('searchStatus', testResults.search);
+
+            const details = testResults.search ?
+                `✅ 搜索功能正常\n响应时间: ${result.duration}ms\n结果: ${result.data.codes?.length || 0}` :
+                `❌ 搜索功能失败\n错误: ${result.error || result.data?.message || '未知错误'}`;
+
+            document.getElementById('functionResult').textContent = details;
+            log(`搜索测试: ${testResults.search ? '成功' : '失败'}`, testResults.search ? 'success' : 'error');
+            updateProgress();
+        }
+
+        async function testDebugMode() {
+            testResults.debug = null;
+            updateProgress();
+
+            const result = await makeRequest('/api/admin/codes?debug=true');
+            testResults.debug = result.ok && result.data && result.data.debug;
+            updateStatus('debugStatus', testResults.debug);
+
+            const details = testResults.debug ?
+                `✅ 调试模式正常\n响应时间: ${result.duration}ms\n调试数据: 可用` :
+                `❌ 调试模式失败\n错误: ${result.error || '无调试数据'}`;
+
+            document.getElementById('functionResult').textContent = details;
+            log(`调试模式测试: ${testResults.debug ? '成功' : '失败'}`, testResults.debug ? 'success' : 'error');
+            updateProgress();
+        }
+
+        async function testPageAccess() {
+            testResults.pageAccess = null;
+            updateProgress();
+
+            try {
+                // 测试主页访问
+                const mainPageResult = await fetch(ADMIN_BASE_URL, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+
+                const mainPageOk = mainPageResult.ok;
+                const contentType = mainPageResult.headers.get('content-type');
+                const isHTML = contentType && contentType.includes('text/html');
+
+                // 测试登录页面访问
+                const loginPageResult = await fetch(ADMIN_BASE_URL + '/login', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                const loginPageOk = loginPageResult.ok;
+
+                testResults.pageAccess = mainPageOk && isHTML && loginPageOk;
+                updateStatus('pageAccessStatus', testResults.pageAccess);
+
+                const details = `主页访问: ${mainPageOk ? '✅' : '❌'} (${mainPageResult.status})\n` +
+                    `内容类型: ${contentType || '未知'}\n` +
+                    `登录页面: ${loginPageOk ? '✅' : '❌'} (${loginPageResult.status})\n` +
+                    `HTML页面: ${isHTML ? '✅' : '❌'}`;
+
+                document.getElementById('functionResult').textContent = details;
+                log(`页面访问测试: ${testResults.pageAccess ? '成功' : '失败'}`, testResults.pageAccess ? 'success' : 'error');
+
+            } catch (error) {
+                testResults.pageAccess = false;
+                updateStatus('pageAccessStatus', false);
+                document.getElementById('functionResult').textContent = `页面访问失败: ${error.message}`;
+                log(`页面访问失败: ${error.message}`, 'error');
+            }
+            updateProgress();
+        }
+
+        async function runAllTests() {
+            log('🚀 开始运行所有测试...', 'info');
+
+            const tests = [
+                { name: '服务器连接', func: testConnection },
+                { name: 'CORS设置', func: testCORS },
+                { name: '页面访问', func: testPageAccess },
+                { name: '管理员登录', func: testLogin },
+                { name: '仪表盘数据', func: testDashboard },
+                { name: '兑换码数据', func: testCodes },
+                { name: '用户数据', func: testUsers },
+                { name: '签到数据', func: testCheckins },
+                { name: '生成功能', func: testGenerate },
+                { name: '搜索功能', func: testSearch },
+                { name: '调试模式', func: testDebugMode }
+            ];
+
+            for (let i = 0; i < tests.length; i++) {
+                const test = tests[i];
+                log(`📋 [${i + 1}/${tests.length}] 测试 ${test.name}...`, 'info');
+
+                try {
+                    await test.func();
+                } catch (error) {
+                    log(`❌ 测试 ${test.name} 出现异常: ${error.message}`, 'error');
+                }
+
+                // 延迟以避免请求过快
+                if (i < tests.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, TEST_CONFIG.delay));
+                }
+            }
+
+            const passed = Object.values(testResults).filter(r => r === true).length;
+            const total = Object.values(testResults).filter(r => r !== null).length;
+            const failed = Object.values(testResults).filter(r => r === false).length;
+
+            const successRate = total > 0 ? ((passed / total) * 100).toFixed(1) : 0;
+
+            log(`🎉 所有测试完成!`, 'success');
+            log(`📊 测试结果: ${passed}/${total} 通过 (${successRate}%)`, 'info');
+
+            if (failed > 0) {
+                const failedTests = Object.entries(testResults)
+                    .filter(([key, value]) => value === false)
+                    .map(([key]) => key);
+                log(`❌ 失败的测试: ${failedTests.join(', ')}`, 'warning');
+            }
+
+            // 生成测试建议
+            if (passed === total) {
+                log('✅ 所有测试通过！管理后台运行正常', 'success');
+            } else if (passed / total >= 0.8) {
+                log('⚠️ 大部分测试通过，建议检查失败项', 'warning');
+            } else {
+                log('🚨 多项测试失败，建议全面检查系统', 'error');
+            }
+        }
+
+        function openAdminPanel() {
+            window.open(ADMIN_BASE_URL, '_blank');
+            log('🌐 打开管理后台主页', 'info');
+        }
+
+        function openLoginPage() {
+            window.open(ADMIN_BASE_URL + '/login', '_blank');
+            log('🔐 打开登录页面', 'info');
+        }
+
+        async function quickHealthCheck() {
+            log('⚡ 开始快速健康检查...', 'info');
+
+            const quickTests = [
+                { name: '服务器连接', func: testConnection },
+                { name: '页面访问', func: testPageAccess },
+                { name: '管理员登录', func: testLogin }
+            ];
+
+            for (let i = 0; i < quickTests.length; i++) {
+                const test = quickTests[i];
+                log(`🔍 [${i + 1}/${quickTests.length}] 检查 ${test.name}...`, 'info');
+
+                try {
+                    await test.func();
+                } catch (error) {
+                    log(`❌ 检查 ${test.name} 出现异常: ${error.message}`, 'error');
+                }
+
+                if (i < quickTests.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+            }
+
+            const quickResults = [
+                testResults.connection,
+                testResults.pageAccess,
+                testResults.login
+            ];
+
+            const passed = quickResults.filter(r => r === true).length;
+            const total = quickResults.filter(r => r !== null).length;
+
+            if (passed === total) {
+                log('✅ 快速健康检查通过！系统基本功能正常', 'success');
+            } else {
+                log(`⚠️ 快速健康检查发现问题 (${passed}/${total} 通过)`, 'warning');
+                log('💡 建议运行完整测试以获取详细信息', 'info');
+            }
+        }
+
+        function exportReport() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                testUrl: ADMIN_BASE_URL,
+                results: testResults,
+                log: testLog,
+                summary: {
+                    total: Object.keys(testResults).length,
+                    passed: Object.values(testResults).filter(r => r === true).length,
+                    failed: Object.values(testResults).filter(r => r === false).length
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `kyx-admin-test-report-${new Date().toISOString().slice(0, 19)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            log('📄 测试报告已导出', 'success');
+        }
+
+        function clearResults() {
+            testResults = {};
+            testLog = [];
+            document.getElementById('testLog').innerHTML = '';
+
+            // 重置所有状态
+            document.querySelectorAll('.status').forEach(el => {
+                el.className = 'status pending';
+                el.textContent = '待测试';
+            });
+
+            // 清空结果显示
+            document.querySelectorAll('.result').forEach(el => {
+                el.textContent = '';
+            });
+
+            updateProgress();
+            log('🧹 测试结果已清除', 'info');
+        }
+
+        // 初始化进度
+        updateProgress();
+        log('🔧 KYX 管理后台测试工具已就绪', 'success');
+        log('💡 提示: 这是一个专用管理后台网站，无需 /admin 路径', 'info');
+        log('🚀 建议先运行"快速健康检查"，然后根据需要运行完整测试', 'info');
+    </script>
+</body>
+
+</html>
