@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -152,8 +152,9 @@ model PrizePool {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  wheelItems WheelItem[]
-  userItems  UserItem[]
+  wheelItems     WheelItem[]
+  userItems      UserItem[]
+  lotteryRecords UserLotteryRecord[]
 
   @@map("prize_pool")
 }
